@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+
+class UserController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = User::query()
+            ->when($request->filled('role'),   fn($q) => $q->where('role', $request->role))
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $q->where(function ($inner) use ($request) {
+                    $inner->where('full_name', 'like', "%{$request->search}%")
+                          ->orWhere('email', 'like', "%{$request->search}%");
+                });
+            })
+            ->orderByDesc('created_at');
+
+        return response()->json($query->paginate(25));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'full_name'      => ['required', 'string', 'max:255'],
+            'email'          => ['required', 'email', 'unique:users,email'],
+            'password'       => ['required', Password::min(8)],
+            'role'           => ['required', 'in:client,staff,administrator'],
+            'age'            => ['nullable', 'integer', 'min:1'],
+            'gender'         => ['nullable', 'in:male,female,other'],
+            'address'        => ['nullable', 'string'],
+            'contact_number' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $user = User::create([
+            ...$validated,
+            'password'    => Hash::make($validated['password']),
+            'is_verified' => true,
+        ]);
+
+        return response()->json($user, 201);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $validated = $request->validate([
+            'full_name'      => ['sometimes', 'string', 'max:255'],
+            'email'          => ['sometimes', 'email', "unique:users,email,{$id}"],
+            'role'           => ['sometimes', 'in:client,staff,administrator'],
+            'age'            => ['nullable', 'integer', 'min:1'],
+            'gender'         => ['nullable', 'in:male,female,other'],
+            'address'        => ['nullable', 'string'],
+            'contact_number' => ['nullable', 'string', 'max:20'],
+            'is_verified'    => ['boolean'],
+            'password'       => ['nullable', Password::min(8)],
+        ]);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
+
+        $user->update($validated);
+
+        return response()->json($user->fresh());
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->isAdmin()) {
+            return response()->json(['message' => 'Cannot delete an administrator account.'], 403);
+        }
+
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted.']);
+    }
+}
