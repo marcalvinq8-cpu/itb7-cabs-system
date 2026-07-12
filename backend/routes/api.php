@@ -13,8 +13,10 @@ use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login',    [AuthController::class, 'login']);
+Route::middleware('throttle:6,1')->group(function () {
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login',    [AuthController::class, 'login']);
+});
 
 // Public facility browsing (no auth required — for guest page)
 Route::get('/public/facilities',      [FacilityController::class, 'index']);
@@ -47,7 +49,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/payments/{reservationId}/initiate',         [PaymentController::class, 'initiate']);
     Route::post('/payments/{reservationId}/select-method',    [PaymentController::class, 'selectMethod']);
     Route::get('/payments/{reservationId}/status',            [PaymentController::class, 'handleCallback']);
-    Route::post('/payments/{reservationId}/test-complete',    [PaymentController::class, 'testComplete']);
 
     // Notifications (read-all must come before {id}/read to avoid route collision)
     Route::get('/notifications',                    [NotificationController::class, 'index']);

@@ -121,14 +121,18 @@ class AnalyticsController extends Controller
 
         if ($request->query('format') === 'csv') {
             $reservations = $query->get();
-            $csv  = "ID,Client,Email,Facility,Date,Start,End,Status,Amount,Payment Status,Receipt\n";
+
+            $escapeFormula = fn($value) => preg_match('/^[=+\-@]/', (string) $value) ? "'" . $value : $value;
+
+            $handle = fopen('php://temp', 'r+');
+            fputcsv($handle, ['ID', 'Client', 'Email', 'Facility', 'Date', 'Start', 'End', 'Status', 'Amount', 'Payment Status', 'Receipt']);
 
             foreach ($reservations as $r) {
-                $csv .= implode(',', [
+                fputcsv($handle, [
                     $r->id,
-                    '"' . ($r->user->full_name ?? '') . '"',
+                    $escapeFormula($r->user->full_name ?? ''),
                     $r->user->email ?? '',
-                    '"' . ($r->facility->name ?? '') . '"',
+                    $escapeFormula($r->facility->name ?? ''),
                     $r->reservation_date->format('Y-m-d'),
                     $r->start_time,
                     $r->end_time,
@@ -136,8 +140,12 @@ class AnalyticsController extends Controller
                     $r->payment->amount ?? 0,
                     $r->payment->status ?? 'N/A',
                     $r->payment->receipt_number ?? '',
-                ]) . "\n";
+                ]);
             }
+
+            rewind($handle);
+            $csv = stream_get_contents($handle);
+            fclose($handle);
 
             return response($csv, 200, [
                 'Content-Type'        => 'text/csv',

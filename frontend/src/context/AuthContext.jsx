@@ -1,10 +1,13 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import api from '@/api/axios'
 
 export const AuthContext = createContext(null)
 
 const TOKEN_KEY = 'cabs_token'
 const USER_KEY  = 'cabs_user'
+
+const IDLE_TIMEOUT_MS = (Number(import.meta.env.VITE_IDLE_TIMEOUT_MINUTES) || 30) * 60_000
+const IDLE_EVENTS = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart']
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(() => {
@@ -69,6 +72,26 @@ export function AuthProvider({ children }) {
       setUser(data)
     } catch { logout() }
   }, [logout])
+
+  // Auto-logout after IDLE_TIMEOUT_MS of no user activity
+  const idleTimerRef = useRef(null)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const resetIdleTimer = () => {
+      clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = setTimeout(logout, IDLE_TIMEOUT_MS)
+    }
+
+    resetIdleTimer()
+    IDLE_EVENTS.forEach((event) => window.addEventListener(event, resetIdleTimer))
+
+    return () => {
+      clearTimeout(idleTimerRef.current)
+      IDLE_EVENTS.forEach((event) => window.removeEventListener(event, resetIdleTimer))
+    }
+  }, [isAuthenticated, logout])
 
   const value = useMemo(() => ({
     user,

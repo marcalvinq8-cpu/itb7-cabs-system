@@ -14,49 +14,6 @@ class PaymentController extends Controller
 {
     public function __construct(private PayMongoService $payMongo) {}
 
-    // ─── Test/demo: Complete payment without PayMongo redirect ───────────────
-
-    public function testComplete(Request $request, $reservationId)
-    {
-        $user        = $request->user();
-        $reservation = Reservation::with(['payment', 'facility', 'user'])->findOrFail($reservationId);
-
-        if ($reservation->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden.'], 403);
-        }
-
-        $payment = $reservation->payment;
-
-        if (!$payment) {
-            return response()->json(['message' => 'Payment record not found.'], 422);
-        }
-
-        if ($payment->status === 'paid') {
-            return response()->json(['message' => 'This reservation has already been paid.'], 422);
-        }
-
-        if ($reservation->status !== 'approved') {
-            return response()->json(['message' => 'Reservation must be approved before payment.'], 422);
-        }
-
-        if (!$reservation->terms_acknowledged) {
-            return response()->json(['message' => 'You must acknowledge the terms before payment.'], 422);
-        }
-
-        $method = $request->input('method', 'gcash');
-
-        $mockIntentData = [
-            'attributes' => [
-                'payments'             => [],
-                'payment_method_types' => [$method],
-            ],
-        ];
-
-        $this->handleSuccess($payment, $mockIntentData);
-
-        return response()->json(['status' => 'succeeded']);
-    }
-
     // ─── Admin: List all payments ─────────────────────────────────────────────
 
     public function adminIndex(Request $request)

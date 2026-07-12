@@ -1,13 +1,11 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import axios from 'axios'
+import api from '@/api/axios'
 import {
   Building2, Calendar, Users, Lock, MapPin, Clock,
   CheckCircle2, ArrowRight, Star, Shield, Zap,
 } from 'lucide-react'
 import Badge from '@/components/ui/Badge'
-
-const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
 function getSportTheme(name = '') {
   const n = name.toLowerCase()
@@ -52,7 +50,7 @@ const FEATURES = [
 export default function GuestPage() {
   const { data: facilities = [], isLoading } = useQuery({
     queryKey: ['public', 'facilities'],
-    queryFn: () => axios.get(`${BASE}/public/facilities`).then(r => r.data),
+    queryFn: () => api.get('/public/facilities').then(r => r.data),
   })
 
   const available = facilities.filter(f => f.status === 'available')
