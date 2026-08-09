@@ -7,6 +7,7 @@ import { ArrowLeft, Download } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import TypeBadge from '@/components/ui/TypeBadge'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import { useNotifications } from '@/hooks/useNotifications'
@@ -61,10 +62,11 @@ export default function ReservationDetail() {
 
   const r = reservation
 
-  const canCancel = ['pending', 'approved'].includes(r.status) && r.payment?.status !== 'paid'
-  const needTerms = r.status === 'approved' && !r.terms_acknowledged
-  const canPay    = r.status === 'approved' && r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canCancel = r.status === 'pending' && r.payment?.status !== 'paid'
+  const needTerms = r.status === 'pending' && !r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canPay    = r.status === 'pending' && r.terms_acknowledged && r.payment?.status !== 'paid'
   const hasPaid   = r.payment?.status === 'paid'
+  const awaitingApproval = r.status === 'pending' && hasPaid
 
   const duration = r.start_time && r.end_time
     ? (new Date(`2000-01-01T${r.end_time}`) - new Date(`2000-01-01T${r.start_time}`)) / 3_600_000
@@ -74,7 +76,7 @@ export default function ReservationDetail() {
     <div className="p-6 max-w-3xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#1C2833] hover:text-gray-800 mb-5 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
@@ -83,10 +85,11 @@ export default function ReservationDetail() {
         <div>
           <div className="border-l-4 border-[#C0392B] pl-4">
             <h1 className="text-2xl font-bold text-[#1C2833]">Reservation #{r.id}</h1>
-            <p className="text-[#717D7E] text-sm mt-0.5">{r.facility?.name}</p>
+            <p className="text-[#1C2833] text-sm mt-0.5">{r.facility?.name}</p>
           </div>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <TypeBadge type={r.type} />
           <Badge status={r.status} />
           {r.payment && r.payment.status !== 'pending' && <Badge status={r.payment.status} />}
         </div>
@@ -108,7 +111,7 @@ export default function ReservationDetail() {
                 ['Submitted',    r.created_at ? format(parseISO(r.created_at), 'MMM d, yyyy h:mm a') : '—'],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-4 py-2.5">
-                  <dt className="font-medium text-gray-500 w-32 shrink-0">{label}</dt>
+                  <dt className="font-medium text-[#1C2833] w-32 shrink-0">{label}</dt>
                   <dd className="text-gray-900">{value ?? '—'}</dd>
                 </div>
               ))}
@@ -151,7 +154,7 @@ export default function ReservationDetail() {
                   ['Paid At',   r.payment.paid_at ? format(parseISO(r.payment.paid_at), 'MMM d, yyyy h:mm a') : '—'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex gap-4 py-2.5">
-                    <dt className="font-medium text-gray-500 w-32 shrink-0">{label}</dt>
+                    <dt className="font-medium text-[#1C2833] w-32 shrink-0">{label}</dt>
                     <dd className="text-gray-900">{value}</dd>
                   </div>
                 ))}
@@ -178,6 +181,10 @@ export default function ReservationDetail() {
 
           {canPay && (
             <Button onClick={() => setShowPayment(true)}>Proceed to Payment</Button>
+          )}
+
+          {awaitingApproval && (
+            <span className="text-sm text-[#B7950B] self-center">Payment received — awaiting staff approval.</span>
           )}
 
           {hasPaid && (

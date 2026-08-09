@@ -57,7 +57,7 @@ export default function PaymentPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
         <CheckCircle2 className="h-16 w-16 text-[#27AE60] mb-4" />
         <h1 className="text-2xl font-bold text-[#1C2833] mb-2">Payment Confirmed!</h1>
-        <p className="text-[#717D7E] mb-8">Your reservation is now confirmed.</p>
+        <p className="text-[#1C2833] mb-8">Your reservation is now confirmed.</p>
         <div className="flex gap-3 flex-wrap justify-center">
           <Link to={`/reservations/${id}/receipt`} replace>
             <Button>View Receipt</Button>
@@ -76,8 +76,8 @@ export default function PaymentPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-6 text-center">
         <XCircle className="h-16 w-16 text-[#C0392B] mb-4" />
         <h1 className="text-2xl font-bold text-[#1C2833] mb-2">Payment Not Confirmed</h1>
-        <p className="text-[#717D7E] mb-2">Your payment hasn't been recorded yet.</p>
-        <p className="text-sm text-[#717D7E] mb-8">
+        <p className="text-[#1C2833] mb-2">Your payment hasn't been recorded yet.</p>
+        <p className="text-sm text-[#1C2833] mb-8">
           If you already paid, please wait a moment and try verifying again.
           Otherwise, you can try paying again.
         </p>
@@ -156,7 +156,7 @@ export default function PaymentPage() {
 
         <button
           onClick={() => navigate(-1)}
-          className="w-full text-sm text-[#717D7E] hover:text-[#1C2833] py-2 transition-colors"
+          className="w-full text-sm text-[#1C2833] hover:text-[#1C2833] py-2 transition-colors"
         >
           Cancel and go back
         </button>
@@ -169,7 +169,7 @@ export default function PaymentPage() {
     <div className="p-6 max-w-lg mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-[#717D7E] hover:text-[#1C2833] mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#1C2833] hover:text-[#1C2833] mb-5 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
@@ -177,7 +177,7 @@ export default function PaymentPage() {
       <div className="border-l-4 border-[#C0392B] pl-4 mb-1">
         <h1 className="text-2xl font-bold text-[#1C2833]">Complete Payment</h1>
       </div>
-      <p className="text-[#717D7E] text-sm mb-6 flex items-center gap-1">
+      <p className="text-[#1C2833] text-sm mb-6 flex items-center gap-1">
         <Lock className="h-3.5 w-3.5" /> Secured by PayMongo
       </p>
 
@@ -214,7 +214,7 @@ export default function PaymentPage() {
               <Building2 className="h-4 w-4 text-[#27AE60]" /> Online Banking
             </span>
             <span className="flex items-center gap-1.5">
-              <CreditCard className="h-4 w-4 text-[#717D7E]" /> Card
+              <CreditCard className="h-4 w-4 text-[#1C2833]" /> Card
             </span>
           </div>
         </CardContent>
@@ -239,7 +239,7 @@ export default function PaymentPage() {
         {createLinkMutation.isPending ? 'Opening PayMongo…' : 'Pay Now via PayMongo'}
       </Button>
 
-      <p className="text-center text-xs text-[#717D7E] mt-4">
+      <p className="text-center text-xs text-[#1C2833] mt-4">
         Your payment is processed securely by PayMongo. CABS does not store your payment details.
       </p>
     </div>

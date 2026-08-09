@@ -73,7 +73,7 @@ export default function Register() {
             <CheckCircle2 className="h-9 w-9 text-[#27AE60]" />
           </div>
           <h2 className="text-xl font-bold text-[#1C2833] mb-2">Registration Successful!</h2>
-          <p className="text-[#717D7E] text-sm">Redirecting you to your dashboard…</p>
+          <p className="text-[#1C2833] text-sm">Redirecting you to your dashboard…</p>
         </div>
       </div>
     )
@@ -108,7 +108,7 @@ export default function Register() {
               {[['Free', 'No sign-up fee'], ['Fast', 'Book in minutes'], ['Easy', 'Simple steps']].map(([title, sub]) => (
                 <div key={title} className="bg-white rounded-xl p-3 border border-white/20 shadow-sm">
                   <p className="text-[#C0392B] font-bold text-xs">{title}</p>
-                  <p className="text-[#717D7E] text-[10px] mt-0.5">{sub}</p>
+                  <p className="text-[#1C2833] text-[10px] mt-0.5">{sub}</p>
                 </div>
               ))}
             </div>
@@ -128,7 +128,7 @@ export default function Register() {
             </div>
 
             <h2 className="text-2xl font-bold text-[#1C2833] mb-1">Create your account</h2>
-            <p className="text-[#717D7E] text-sm mb-7">Join CABS and reserve facilities online</p>
+            <p className="text-[#1C2833] text-sm mb-7">Join CABS and reserve facilities online</p>
 
             {apiError && (
               <Alert variant="error" className="mb-5">{apiError}</Alert>
@@ -162,7 +162,7 @@ export default function Register() {
                       {...register('password')}
                     />
                     <button type="button" onClick={() => setShowPass(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#717D7E] hover:text-[#1C2833]" tabIndex={-1}>
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2833] hover:text-[#1C2833]" tabIndex={-1}>
                       {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -181,7 +181,7 @@ export default function Register() {
                       {...register('password_confirmation')}
                     />
                     <button type="button" onClick={() => setShowPass2(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#717D7E] hover:text-[#1C2833]" tabIndex={-1}>
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2833] hover:text-[#1C2833]" tabIndex={-1}>
                       {showPass2 ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -191,12 +191,12 @@ export default function Register() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="age">Age <span className="text-[#1C2833] font-normal">(Optional)</span></Label>
                   <Input id="age" type="number" min="5" max="150" placeholder="22" error={!!errors.age} className={inputFocus} {...register('age')} />
                   {errors.age && <p className={errText}>{errors.age.message}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">Gender <span className="text-[#1C2833] font-normal">(Optional)</span></Label>
                   <select
                     id="gender"
                     className="block w-full rounded-lg border border-[#FADBD8] px-3 py-2 text-sm text-[#1C2833] bg-white focus:outline-none focus:ring-2 focus:ring-[#FADBD8] focus:border-[#C0392B]"
@@ -241,12 +241,12 @@ export default function Register() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-[#717D7E]">
+            <p className="mt-6 text-center text-sm text-[#1C2833]">
               Already have an account?{' '}
               <Link to="/login" className="font-semibold text-[#C0392B] hover:text-[#96281B]">Sign in</Link>
             </p>
 
-            <p className="text-center text-xs text-[#717D7E]/60 mt-6">
+            <p className="text-center text-xs text-[#1C2833]/60 mt-6">
               © {new Date().getFullYear()} Cabuyao Athletes Basic School
             </p>
           </div>

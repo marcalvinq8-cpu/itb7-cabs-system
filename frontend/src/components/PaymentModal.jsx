@@ -49,7 +49,29 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
 
   const r = reservation
 
-  const titles = { idle: 'Complete Payment', opened: 'Complete Your Payment', success: 'Payment Confirmed', failed: 'Payment Not Confirmed' }
+  // Payment must be accomplished before a reservation can go anywhere (approval
+  // included) — closing out unpaid means it should never have been added.
+  const handleClose = () => {
+    if (phase !== 'success' && r?.status === 'pending') {
+      toast.info(
+        r.type === 'book'
+          ? 'Booking not completed — no payment was made.'
+          : 'Reservation not completed — no payment was made.'
+      )
+      api.delete(`/reservations/${reservationId}`).catch(() => {}).finally(() => {
+        queryClient.invalidateQueries({ queryKey: ['reservations'] })
+        queryClient.invalidateQueries({ queryKey: ['reservation', String(reservationId)] })
+      })
+    }
+    onClose()
+  }
+
+  const titles = {
+    idle:   'Complete Payment',
+    opened: 'Complete Your Payment',
+    success: r?.type === 'book' ? 'Booking Confirmed' : 'Payment Received',
+    failed: 'Payment Not Confirmed',
+  }
 
   let body
 
@@ -60,13 +82,19 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
     body = (
       <div className="flex flex-col items-center text-center py-6">
         <CheckCircle2 className="h-16 w-16 text-[#27AE60] mb-4" />
-        <h2 className="text-xl font-bold text-[#1C2833] mb-2">Payment Confirmed!</h2>
-        <p className="text-[#717D7E] mb-6">Your reservation is now confirmed.</p>
+        <h2 className="text-xl font-bold text-[#1C2833] mb-2">
+          {r?.type === 'book' ? 'Booking Confirmed!' : 'Payment Received!'}
+        </h2>
+        <p className="text-[#1C2833] mb-6">
+          {r?.type === 'book'
+            ? 'Your booking is confirmed — no approval needed.'
+            : 'Your reservation is now awaiting staff approval.'}
+        </p>
         <div className="flex gap-3 flex-wrap justify-center">
           {onViewReceipt && (
             <Button onClick={onViewReceipt}>View Receipt</Button>
           )}
-          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button variant="outline" onClick={handleClose}>Close</Button>
         </div>
       </div>
     )
@@ -76,8 +104,8 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
       <div className="flex flex-col items-center text-center py-6">
         <XCircle className="h-16 w-16 text-[#C0392B] mb-4" />
         <h2 className="text-xl font-bold text-[#1C2833] mb-2">Payment Not Confirmed</h2>
-        <p className="text-[#717D7E] mb-2">Your payment hasn't been recorded yet.</p>
-        <p className="text-sm text-[#717D7E] mb-6">
+        <p className="text-[#1C2833] mb-2">Your payment hasn't been recorded yet.</p>
+        <p className="text-sm text-[#1C2833] mb-6">
           If you already paid, please wait a moment and try verifying again.
         </p>
         <div className="flex gap-3 flex-wrap justify-center">
@@ -131,7 +159,7 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
           <CheckCircle2 className="h-4 w-4" />
           {verifyMutation.isPending ? 'Verifying…' : "I've Paid — Verify Now"}
         </Button>
-        <button onClick={() => setPhase('idle')} className="w-full text-sm text-[#717D7E] hover:text-[#1C2833] py-1 transition-colors">
+        <button onClick={() => setPhase('idle')} className="w-full text-sm text-[#1C2833] hover:text-[#1C2833] py-1 transition-colors">
           Go back
         </button>
       </div>
@@ -162,7 +190,7 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
               <span className="flex items-center gap-1.5"><Smartphone className="h-4 w-4 text-[#2980B9]" /> GCash</span>
               <span className="flex items-center gap-1.5"><Smartphone className="h-4 w-4 text-[#8E44AD]" /> Maya</span>
               <span className="flex items-center gap-1.5"><Building2 className="h-4 w-4 text-[#27AE60]" /> Online Banking</span>
-              <span className="flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-[#717D7E]" /> Card</span>
+              <span className="flex items-center gap-1.5"><CreditCard className="h-4 w-4 text-[#1C2833]" /> Card</span>
             </div>
           </CardContent>
         </Card>
@@ -179,7 +207,7 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
           {createLinkMutation.isPending ? 'Opening PayMongo…' : 'Pay Now via PayMongo'}
         </Button>
 
-        <p className="text-center text-xs text-[#717D7E] flex items-center justify-center gap-1">
+        <p className="text-center text-xs text-[#1C2833] flex items-center justify-center gap-1">
           <Lock className="h-3 w-3" /> Secured by PayMongo. CABS does not store your payment details.
         </p>
       </div>
@@ -187,7 +215,7 @@ export default function PaymentModal({ reservationId, onClose, onViewReceipt }) 
   }
 
   return (
-    <Modal title={titles[phase] ?? 'Payment'} onClose={onClose} size="md">
+    <Modal title={titles[phase] ?? 'Payment'} onClose={handleClose} size="md">
       {body}
     </Modal>
   )

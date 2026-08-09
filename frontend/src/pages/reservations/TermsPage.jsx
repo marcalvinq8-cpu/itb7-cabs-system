@@ -8,14 +8,18 @@ import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 
-const TERMS = [
+const termsFor = type => [
   {
     heading: '1. Reservation Policy',
-    body: 'All reservations are subject to availability and must be approved by CABS administration. A booking is only confirmed after approval and full payment of the booking fee.',
+    body: type === 'book'
+      ? 'All bookings are subject to availability. A "Book" reservation is confirmed automatically as soon as full payment is received — no staff approval is required.'
+      : 'All reservations are subject to availability. A "Reserve" request is only confirmed after full payment of the booking fee and approval by CABS administration.',
   },
   {
     heading: '2. Payment',
-    body: 'Full payment is required to confirm your booking. Accepted methods include GCash, Maya, and online banking. Payment must be completed within 24 hours of approval or the reservation may be forfeited.',
+    body: type === 'book'
+      ? 'Full payment is required to instantly confirm your booking. Accepted methods include GCash, Maya, and online banking.'
+      : 'Full payment is required before your reservation can be reviewed for approval. Accepted methods include GCash, Maya, and online banking. Unpaid requests may be forfeited if payment is not completed promptly.',
   },
   {
     heading: '3. Cancellation & Refund',
@@ -64,7 +68,7 @@ export default function TermsPage() {
       <div className="p-6 max-w-2xl mx-auto text-center py-20">
         <CheckCircle2 className="h-14 w-14 text-green-500 mx-auto mb-3" />
         <h2 className="text-xl font-bold text-gray-900 mb-2">Terms Already Acknowledged</h2>
-        <p className="text-gray-500 mb-6">You have already agreed to the terms and conditions.</p>
+        <p className="text-[#1C2833] mb-6">You have already agreed to the terms and conditions.</p>
         <Link to={`/reservations/${id}/payment`} replace>
           <Button>Proceed to Payment</Button>
         </Link>
@@ -76,7 +80,7 @@ export default function TermsPage() {
     <div className="p-6 max-w-2xl mx-auto">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#1C2833] hover:text-gray-800 mb-5 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
@@ -85,13 +89,13 @@ export default function TermsPage() {
         <FileText className="h-6 w-6 text-[#C0392B]" />
         <h1 className="text-2xl font-bold text-[#1C2833]">Terms and Conditions</h1>
       </div>
-      <p className="text-gray-500 text-sm mb-6">
+      <p className="text-[#1C2833] text-sm mb-6">
         Please read and acknowledge the following terms before proceeding to payment.
       </p>
 
       <Card className="mb-5">
         <CardContent className="space-y-5 py-5">
-          {TERMS.map(({ heading, body }) => (
+          {termsFor(reservation?.type).map(({ heading, body }) => (
             <div key={heading}>
               <h3 className="font-semibold text-gray-900 text-sm mb-1">{heading}</h3>
               <p className="text-sm text-gray-600 leading-relaxed">{body}</p>

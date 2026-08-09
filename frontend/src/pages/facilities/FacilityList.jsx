@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MapPin, Users, Clock, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { MapPin, Users, Clock, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import NewReservationModal from '@/components/NewReservationModal'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
 const FILTERS = [
   { value: 'all',               label: 'All'         },
@@ -55,6 +56,11 @@ export default function FacilityList() {
     queryKey: ['facilities'],
     queryFn: () => api.get('/facilities').then(r => r.data),
   })
+
+  const searchSuggestions = useMemo(() => [
+    ...facilities.map(f => f.name),
+    ...facilities.map(f => f.location),
+  ], [facilities])
 
   const filtered = facilities.filter(f => {
     const matchStatus = status === 'all' || f.status === status
@@ -110,7 +116,7 @@ export default function FacilityList() {
       {/* Header */}
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Facilities</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Browse and reserve sports facilities</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Browse and reserve sports facilities</p>
       </div>
 
       {/* Stat cards */}
@@ -127,23 +133,20 @@ export default function FacilityList() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#C0392B] pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder="Search by facility name or location…"
-          className="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
-        />
-      </div>
+      <SearchAutocomplete
+        value={search}
+        onChange={handleSearch}
+        suggestions={searchSuggestions}
+        placeholder="Search by facility name or location…"
+        inputClassName="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
+      />
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
@@ -154,7 +157,7 @@ export default function FacilityList() {
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               status === f.value
                 ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
             }`}
           >
             {f.label}
@@ -164,7 +167,7 @@ export default function FacilityList() {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">No facilities found.</div>
+        <div className="text-center py-16 text-[#1C2833]">No facilities found.</div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -176,7 +179,7 @@ export default function FacilityList() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-[#717D7E]">
+              <p className="text-sm text-[#1C2833]">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} facilities
               </p>
               <div className="flex items-center gap-2">
@@ -196,7 +199,7 @@ export default function FacilityList() {
                       className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                         n === page
                           ? 'bg-[#C0392B] text-white'
-                          : 'bg-white border border-[#E5E7E9] text-[#717D7E] hover:bg-[#FADBD8]'
+                          : 'bg-white border border-[#E5E7E9] text-[#1C2833] hover:bg-[#FADBD8]'
                       }`}
                     >
                       {n}
@@ -249,23 +252,23 @@ function FacilityCard({ facility }) {
         <div>
           <h3 className="font-semibold text-gray-900">{facility.name}</h3>
           {facility.location && (
-            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+            <p className="text-xs text-[#1C2833] flex items-center gap-1 mt-0.5">
               <MapPin className="h-3 w-3" /> {facility.location}
             </p>
           )}
           {facility.description && (
-            <p className="text-sm text-gray-500 mt-1 line-clamp-2">{facility.description}</p>
+            <p className="text-sm text-[#1C2833] mt-1 line-clamp-2">{facility.description}</p>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
           {facility.capacity && (
             <span className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-gray-400" /> {facility.capacity} max
+              <Users className="h-4 w-4 text-[#1C2833]" /> {facility.capacity} max
             </span>
           )}
           <span className="flex items-center gap-1">
-            <Clock className="h-4 w-4 text-gray-400" />
+            <Clock className="h-4 w-4 text-[#1C2833]" />
             ₱{Number(facility.price_per_hour).toLocaleString()}/hr
           </span>
         </div>
@@ -276,7 +279,7 @@ function FacilityCard({ facility }) {
               <span key={a.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{a.name}</span>
             ))}
             {facility.amenities.length > 3 && (
-              <span className="text-xs text-gray-400 py-0.5">+{facility.amenities.length - 3} more</span>
+              <span className="text-xs text-[#1C2833] py-0.5">+{facility.amenities.length - 3} more</span>
             )}
           </div>
         )}

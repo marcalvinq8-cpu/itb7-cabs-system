@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MapPin, Users, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { MapPin, Users, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/api/axios'
 import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
 const FILTERS = [
   { value: 'all',               label: 'All'         },
@@ -40,6 +41,11 @@ export default function StaffFacilities() {
     queryKey: ['facilities'],
     queryFn: () => api.get('/facilities').then(r => r.data),
   })
+
+  const searchSuggestions = useMemo(() => [
+    ...facilities.map(f => f.name),
+    ...facilities.map(f => f.location),
+  ], [facilities])
 
   const filtered = facilities.filter(f => {
     const matchStatus = statusFilter === 'all' || f.status === statusFilter
@@ -90,7 +96,7 @@ export default function StaffFacilities() {
       {/* Header */}
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Facilities</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Overview of all CABS sports facilities</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Overview of all CABS sports facilities</p>
       </div>
 
       {/* Stat cards */}
@@ -106,22 +112,19 @@ export default function StaffFacilities() {
               <Icon className="h-4.5 w-4.5" />
             </div>
             <p className="text-xl font-bold text-[#1C2833]">{value}</p>
-            <p className="text-xs text-[#717D7E]">{label}</p>
+            <p className="text-xs text-[#1C2833]">{label}</p>
           </div>
         ))}
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#C0392B] pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => handleSearch(e.target.value)}
-          placeholder="Search by name or location…"
-          className="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
-        />
-      </div>
+      <SearchAutocomplete
+        value={search}
+        onChange={handleSearch}
+        suggestions={searchSuggestions}
+        placeholder="Search by name or location…"
+        inputClassName="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
+      />
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
@@ -132,7 +135,7 @@ export default function StaffFacilities() {
             className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
               statusFilter === f.value
                 ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
             }`}
           >
             {f.label}
@@ -142,7 +145,7 @@ export default function StaffFacilities() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-[#717D7E]">No facilities found.</div>
+        <div className="text-center py-16 text-[#1C2833]">No facilities found.</div>
       ) : (
         <>
           <div className="bg-white rounded-xl border border-[#E5E7E9] overflow-hidden shadow-sm">
@@ -150,12 +153,12 @@ export default function StaffFacilities() {
               <table className="w-full min-w-[560px]">
                 <thead>
                   <tr className="bg-[#FADBD8]/60 border-b border-[#E5E7E9]">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#717D7E] uppercase tracking-wide">Facility</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#717D7E] uppercase tracking-wide">Location</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#717D7E] uppercase tracking-wide">Capacity</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#717D7E] uppercase tracking-wide">Price/hr</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#717D7E] uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#717D7E] uppercase tracking-wide"></th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Facility</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Location</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Capacity</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Price/hr</th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Status</th>
+                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#1C2833] uppercase tracking-wide"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -178,12 +181,12 @@ export default function StaffFacilities() {
                             <div className="min-w-0">
                               <p className="font-semibold text-[#1C2833] text-sm">{f.name}</p>
                               {f.description && (
-                                <p className="text-xs text-[#717D7E] truncate max-w-[180px]">{f.description}</p>
+                                <p className="text-xs text-[#1C2833] truncate max-w-[180px]">{f.description}</p>
                               )}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-[#717D7E]">
+                        <td className="px-4 py-3 text-sm text-[#1C2833]">
                           {f.location ? (
                             <span className="flex items-center gap-1">
                               <MapPin className="h-3.5 w-3.5 text-[#C0392B]" /> {f.location}
@@ -193,7 +196,7 @@ export default function StaffFacilities() {
                         <td className="px-4 py-3 text-sm text-[#1C2833] text-center">
                           {f.capacity ? (
                             <span className="flex items-center justify-center gap-1">
-                              <Users className="h-3.5 w-3.5 text-[#717D7E]" /> {f.capacity}
+                              <Users className="h-3.5 w-3.5 text-[#1C2833]" /> {f.capacity}
                             </span>
                           ) : '—'}
                         </td>
@@ -218,7 +221,7 @@ export default function StaffFacilities() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <p className="text-sm text-[#717D7E]">
+              <p className="text-sm text-[#1C2833]">
                 Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} facilities
               </p>
               <div className="flex items-center gap-2">
@@ -237,7 +240,7 @@ export default function StaffFacilities() {
                       className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
                         n === page
                           ? 'bg-[#C0392B] text-white'
-                          : 'bg-white border border-[#E5E7E9] text-[#717D7E] hover:bg-[#FADBD8]'
+                          : 'bg-white border border-[#E5E7E9] text-[#1C2833] hover:bg-[#FADBD8]'
                       }`}
                     >
                       {n}

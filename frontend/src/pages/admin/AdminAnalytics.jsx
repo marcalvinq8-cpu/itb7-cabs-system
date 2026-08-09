@@ -98,7 +98,7 @@ export default function AdminAnalytics() {
       {/* Header */}
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Analytics &amp; Reports</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Revenue, utilization trends, and reservation reports</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Revenue, utilization trends, and reservation reports</p>
       </div>
 
       {/* KPI stat cards */}
@@ -135,7 +135,7 @@ export default function AdminAnalytics() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
@@ -150,7 +150,7 @@ export default function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Monthly Revenue</CardTitle>
-                <p className="text-xs text-[#717D7E] mt-0.5">Collected payments per month</p>
+                <p className="text-xs text-[#1C2833] mt-0.5">Collected payments per month</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-[#FADBD8] flex items-center justify-center">
                 <TrendingUp className="h-4 w-4 text-[#C0392B]" />
@@ -159,7 +159,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent className="pt-0">
             {revenue.length === 0 ? (
-              <div className="h-52 flex items-center justify-center text-gray-300 text-sm">No revenue data yet</div>
+              <div className="h-52 flex items-center justify-center text-[#1C2833] text-sm">No revenue data yet</div>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={revenue} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -189,7 +189,7 @@ export default function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Bookings by Day of Week</CardTitle>
-                <p className="text-xs text-[#717D7E] mt-0.5">Last 90 days</p>
+                <p className="text-xs text-[#1C2833] mt-0.5">Last 90 days</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-[#D5F5E3] flex items-center justify-center">
                 <ClipboardList className="h-4 w-4 text-[#27AE60]" />
@@ -198,7 +198,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent className="pt-0">
             {trends.length === 0 ? (
-              <div className="h-52 flex items-center justify-center text-gray-300 text-sm">No data yet</div>
+              <div className="h-52 flex items-center justify-center text-[#1C2833] text-sm">No data yet</div>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={trends} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
@@ -221,7 +221,7 @@ export default function AdminAnalytics() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Facility Utilization</CardTitle>
-                <p className="text-xs text-[#717D7E] mt-0.5">Bookings per facility in the last 30 days</p>
+                <p className="text-xs text-[#1C2833] mt-0.5">Bookings per facility in the last 30 days</p>
               </div>
               <div className="w-8 h-8 rounded-lg bg-[#F5EEF8] flex items-center justify-center">
                 <Building2 className="h-4 w-4 text-[#8E44AD]" />
@@ -230,7 +230,7 @@ export default function AdminAnalytics() {
           </CardHeader>
           <CardContent className="pt-0">
             {utilization.length === 0 ? (
-              <div className="h-40 flex items-center justify-center text-gray-300 text-sm">No data yet</div>
+              <div className="h-40 flex items-center justify-center text-[#1C2833] text-sm">No data yet</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={utilization} margin={{ top: 5, right: 10, left: 0, bottom: 40 }}>
@@ -258,7 +258,7 @@ export default function AdminAnalytics() {
             </div>
             <div>
               <p className="font-bold text-[#1C2833] text-base">Reservation Report</p>
-              <p className="text-xs text-[#717D7E]">{total} records match current filters</p>
+              <p className="text-xs text-[#1C2833]">{total} records match current filters</p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={downloadCsv} className="flex items-center gap-2 self-start sm:self-auto">
@@ -268,27 +268,27 @@ export default function AdminAnalytics() {
 
         {/* Filters */}
         <div className="px-6 py-4 border-b border-[#E5E7E9] bg-[#FADBD8]/20">
-          <p className="text-xs font-semibold text-[#717D7E] uppercase tracking-wide mb-3">Filters</p>
+          <p className="text-xs font-semibold text-[#1C2833] uppercase tracking-wide mb-3">Filters</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div>
-              <Label className="text-xs text-[#717D7E]">From</Label>
+              <Label className="text-xs text-[#1C2833]">From</Label>
               <Input type="date" value={filters.date_from}
                 onChange={e => setFilter('date_from', e.target.value)} className="mt-1 h-9 text-sm" />
             </div>
             <div>
-              <Label className="text-xs text-[#717D7E]">To</Label>
+              <Label className="text-xs text-[#1C2833]">To</Label>
               <Input type="date" value={filters.date_to}
                 onChange={e => setFilter('date_to', e.target.value)} className="mt-1 h-9 text-sm" />
             </div>
             <div>
-              <Label className="text-xs text-[#717D7E]">Facility</Label>
+              <Label className="text-xs text-[#1C2833]">Facility</Label>
               <select value={filters.facility_id} onChange={e => setFilter('facility_id', e.target.value)} className={SELECT_CLS}>
                 <option value="">All facilities</option>
                 {facilities.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
               </select>
             </div>
             <div>
-              <Label className="text-xs text-[#717D7E]">Status</Label>
+              <Label className="text-xs text-[#1C2833]">Status</Label>
               <select value={filters.status} onChange={e => setFilter('status', e.target.value)} className={SELECT_CLS}>
                 {['all','pending','approved','confirmed','completed','rejected','cancelled'].map(s => (
                   <option key={s} value={s} className="capitalize">{s}</option>
@@ -296,7 +296,7 @@ export default function AdminAnalytics() {
               </select>
             </div>
             <div>
-              <Label className="text-xs text-[#717D7E]">Payment</Label>
+              <Label className="text-xs text-[#1C2833]">Payment</Label>
               <select value={filters.payment_status} onChange={e => setFilter('payment_status', e.target.value)} className={SELECT_CLS}>
                 {['all','pending','paid','failed','expired'].map(s => (
                   <option key={s} value={s} className="capitalize">{s}</option>
@@ -311,7 +311,7 @@ export default function AdminAnalytics() {
           {loadingReports ? (
             <div className="flex justify-center py-12"><Spinner size="lg" /></div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-12 text-gray-400 text-sm">No records match the selected filters.</div>
+            <div className="text-center py-12 text-[#1C2833] text-sm">No records match the selected filters.</div>
           ) : (
             <div className={`overflow-x-auto transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
               <table className="w-full text-sm">
@@ -325,10 +325,10 @@ export default function AdminAnalytics() {
                 <tbody className="divide-y divide-[#E5E7E9]">
                   {rows.map(r => (
                     <tr key={r.id} className="hover:bg-[#FADBD8]/10 transition-colors">
-                      <td className="px-4 py-3 text-gray-400 font-mono text-xs">{r.id}</td>
+                      <td className="px-4 py-3 text-[#1C2833] font-mono text-xs">{r.id}</td>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-[#1C2833] whitespace-nowrap">{r.user?.full_name}</p>
-                        <p className="text-xs text-[#717D7E]">{r.user?.email}</p>
+                        <p className="text-xs text-[#1C2833]">{r.user?.email}</p>
                       </td>
                       <td className="px-4 py-3 text-gray-700 whitespace-nowrap">{r.facility?.name}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
@@ -344,7 +344,7 @@ export default function AdminAnalytics() {
                       <td className="px-4 py-3">
                         {r.payment && <Badge status={r.payment.status} />}
                       </td>
-                      <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                      <td className="px-4 py-3 text-[#1C2833] font-mono text-xs">
                         {r.payment?.receipt_number ?? '—'}
                       </td>
                     </tr>
@@ -356,7 +356,7 @@ export default function AdminAnalytics() {
 
           {lastPage > 1 && (
             <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
-              <p className="text-sm text-[#717D7E]">
+              <p className="text-sm text-[#1C2833]">
                 Page {curPage} of {lastPage} · <span className="font-medium text-[#1C2833]">{total}</span> records
               </p>
               <div className="flex gap-2">

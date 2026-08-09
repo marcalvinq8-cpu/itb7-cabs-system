@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO, isToday, isFuture } from 'date-fns'
 import { toast } from 'sonner'
-import { Calendar, Plus, Download, Eye, X, Clock, MapPin, ClipboardList, CheckCircle2, AlertCircle, Search } from 'lucide-react'
+import { Calendar, Plus, Download, Eye, X, Clock, MapPin, ClipboardList, CheckCircle2, AlertCircle } from 'lucide-react'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import TypeBadge from '@/components/ui/TypeBadge'
 import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import NewReservationModal from '@/components/NewReservationModal'
@@ -56,6 +58,11 @@ export default function MyReservations() {
     onError: err => toast.error(err.response?.data?.message || 'Failed to cancel.'),
   })
 
+  const searchSuggestions = useMemo(() => [
+    ...reservations.map(r => r.facility?.name),
+    ...reservations.map(r => r.facility?.location),
+  ], [reservations])
+
   const filtered = reservations.filter(r => {
     const matchStatus = statusFilter === 'all' || r.status === statusFilter
     const q = search.trim().toLowerCase()
@@ -84,7 +91,7 @@ export default function MyReservations() {
       .catch(() => toast.error('Failed to download receipt.'))
   }
 
-  const upcoming  = reservations.filter(r => ['approved','confirmed'].includes(r.status) && r.reservation_date && (isToday(parseISO(r.reservation_date)) || isFuture(parseISO(r.reservation_date)))).length
+  const upcoming  = reservations.filter(r => (r.status === 'confirmed' || (r.status === 'pending' && r.payment?.status === 'paid')) && r.reservation_date && (isToday(parseISO(r.reservation_date)) || isFuture(parseISO(r.reservation_date)))).length
   const pending   = reservations.filter(r => r.status === 'pending').length
   const completed = reservations.filter(r => r.status === 'completed').length
 
@@ -114,7 +121,7 @@ export default function MyReservations() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="border-l-4 border-[#C0392B] pl-4">
           <h1 className="text-2xl font-bold text-[#1C2833]">My Reservations</h1>
-          <p className="text-[#717D7E] text-sm mt-0.5">Track and manage your facility bookings</p>
+          <p className="text-[#1C2833] text-sm mt-0.5">Track and manage your facility bookings</p>
         </div>
         <Button className="flex items-center gap-2" onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4" /> New Reservation
@@ -135,23 +142,20 @@ export default function MyReservations() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#C0392B] pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search by facility name, location, or date…"
-          className="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
-        />
-      </div>
+      <SearchAutocomplete
+        value={search}
+        onChange={setSearch}
+        suggestions={searchSuggestions}
+        placeholder="Search by facility name, location, or date…"
+        inputClassName="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
+      />
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
@@ -162,7 +166,7 @@ export default function MyReservations() {
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               statusFilter === value
                 ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
             }`}
           >
             {label}
@@ -175,7 +179,7 @@ export default function MyReservations() {
         <Card>
           <CardContent className="text-center py-16">
             <Calendar className="h-12 w-12 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-500 font-medium">No reservations found.</p>
+            <p className="text-[#1C2833] font-medium">No reservations found.</p>
             <Button className="mt-4" size="sm" onClick={() => setShowModal(true)}>Make a Reservation</Button>
           </CardContent>
         </Card>
@@ -205,10 +209,11 @@ export default function MyReservations() {
 }
 
 function ReservationRow({ reservation: r, onView, onCancel, onDownload, onPay, onViewReceipt }) {
-  const canCancel = ['pending', 'approved'].includes(r.status) && r.payment?.status !== 'paid'
-  const needTerms = r.status === 'approved' && !r.terms_acknowledged
-  const canPay    = r.status === 'approved' && r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canCancel = r.status === 'pending' && r.payment?.status !== 'paid'
+  const needTerms = r.status === 'pending' && !r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canPay    = r.status === 'pending' && r.terms_acknowledged && r.payment?.status !== 'paid'
   const hasPaid   = r.payment?.status === 'paid'
+  const awaitingApproval = r.status === 'pending' && hasPaid
   const borderClass = STATUS_BORDER[r.status] ?? 'border-l-gray-300'
 
   return (
@@ -220,26 +225,27 @@ function ReservationRow({ reservation: r, onView, onCancel, onDownload, onPay, o
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-semibold text-gray-900 text-base">{r.facility?.name}</span>
+              <TypeBadge type={r.type} />
               <Badge status={r.status} />
               {r.payment && !['pending', 'cancelled', 'rejected'].includes(r.payment.status) && (
                 <Badge status={r.payment.status} />
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-[#1C2833]">
               <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                <Calendar className="h-3.5 w-3.5 text-[#1C2833]" />
                 {r.reservation_date ? format(parseISO(r.reservation_date), 'MMM d, yyyy') : '—'}
               </span>
               {r.start_time && r.end_time && (
                 <span className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-gray-400" />
+                  <Clock className="h-3.5 w-3.5 text-[#1C2833]" />
                   {r.start_time.slice(0, 5)} – {r.end_time.slice(0, 5)}
                 </span>
               )}
               {r.facility?.location && (
                 <span className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                  <MapPin className="h-3.5 w-3.5 text-[#1C2833]" />
                   {r.facility.location}
                 </span>
               )}
@@ -266,6 +272,10 @@ function ReservationRow({ reservation: r, onView, onCancel, onDownload, onPay, o
 
             {canPay && (
               <Button size="sm" onClick={onPay}>Pay Now</Button>
+            )}
+
+            {awaitingApproval && (
+              <span className="text-sm text-[#B7950B]">Awaiting approval</span>
             )}
 
             {hasPaid && (

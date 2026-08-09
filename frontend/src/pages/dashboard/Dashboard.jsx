@@ -67,7 +67,7 @@ export default function Dashboard() {
     queryFn: () => api.get('/facilities').then(r => r.data),
   })
 
-  const upcoming  = reservations.filter(r => ['approved','confirmed'].includes(r.status) && r.reservation_date && (isToday(parseISO(r.reservation_date)) || isFuture(parseISO(r.reservation_date))))
+  const upcoming  = reservations.filter(r => (r.status === 'confirmed' || (r.status === 'pending' && r.payment?.status === 'paid')) && r.reservation_date && (isToday(parseISO(r.reservation_date)) || isFuture(parseISO(r.reservation_date))))
   const pending   = reservations.filter(r => r.status === 'pending')
   const available = facilities.filter(f => f.status === 'available')
 
@@ -90,7 +90,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Welcome back, {firstName}!</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Here's your activity overview</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Here's your activity overview</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -102,7 +102,7 @@ export default function Dashboard() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-                <p className="text-xs text-[#717D7E] mt-0.5 leading-tight">{label}</p>
+                <p className="text-xs text-[#1C2833] mt-0.5 leading-tight">{label}</p>
               </CardContent>
             </Card>
           </Link>
@@ -121,7 +121,7 @@ export default function Dashboard() {
             {upcoming.length === 0 ? (
               <div className="text-center py-10">
                 <CalendarCheck className="h-10 w-10 text-[#FADBD8] mx-auto mb-2" />
-                <p className="text-[#717D7E] text-sm">No upcoming reservations</p>
+                <p className="text-[#1C2833] text-sm">No upcoming reservations</p>
                 <Button size="sm" className="mt-3" onClick={() => openModal()}>Book a Facility</Button>
               </div>
             ) : (
@@ -131,7 +131,7 @@ export default function Dashboard() {
                     className="w-full flex items-center justify-between p-3 rounded-lg border border-[#E5E7E9] hover:bg-[#FADBD8]/20 transition-colors text-left">
                     <div>
                       <p className="font-medium text-sm text-[#1C2833]">{r.facility?.name}</p>
-                      <p className="text-xs text-[#717D7E] mt-0.5">
+                      <p className="text-xs text-[#1C2833] mt-0.5">
                         {r.reservation_date ? format(parseISO(r.reservation_date), 'MMM d, yyyy') : '—'}
                         {r.start_time && <> · {r.start_time.slice(0,5)} – {r.end_time?.slice(0,5)}</>}
                       </p>
@@ -153,14 +153,14 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent className="pt-0 space-y-2">
             {notifications.length === 0 ? (
-              <p className="text-center text-[#717D7E] text-sm py-8">No notifications</p>
+              <p className="text-center text-[#1C2833] text-sm py-8">No notifications</p>
             ) : (
               notifications.slice(0, 5).map(n => (
                 <div key={n.id} className={cn('flex items-start gap-2 p-2 rounded-lg', !n.read_at && 'bg-[#FADBD8]/20')}>
                   <span className={cn('w-2 h-2 rounded-full flex-shrink-0 mt-1.5', n.read_at ? 'bg-[#E5E7E9]' : 'bg-[#C0392B]')} />
                   <div className="min-w-0">
                     <p className={cn('text-xs text-[#1C2833] line-clamp-1', !n.read_at && 'font-semibold')}>{n.title}</p>
-                    <p className="text-[10px] text-[#717D7E] mt-0.5">{new Date(n.created_at).toLocaleString('en-PH')}</p>
+                    <p className="text-[10px] text-[#1C2833] mt-0.5">{new Date(n.created_at).toLocaleString('en-PH')}</p>
                   </div>
                 </div>
               ))
@@ -180,7 +180,7 @@ export default function Dashboard() {
           {loadingFac ? (
             <div className="flex gap-4 overflow-x-auto pb-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-48 flex-shrink-0" />)}</div>
           ) : available.length === 0 ? (
-            <p className="text-center text-[#717D7E] text-sm py-6">No facilities available right now</p>
+            <p className="text-center text-[#1C2833] text-sm py-6">No facilities available right now</p>
           ) : (
             <div className="flex gap-4 overflow-x-auto pb-2">
               {available.map(f => (
@@ -190,7 +190,7 @@ export default function Dashboard() {
                   </div>
                   <div className="p-2.5">
                     <p className="font-medium text-xs text-[#1C2833] truncate">{f.name}</p>
-                    <p className="text-[10px] text-[#717D7E] mt-0.5">₱{Number(f.price_per_hour).toLocaleString()}/hr</p>
+                    <p className="text-[10px] text-[#1C2833] mt-0.5">₱{Number(f.price_per_hour).toLocaleString()}/hr</p>
                     <Button size="sm" className="w-full mt-2 !text-[10px] !py-1" onClick={() => openModal(f.id)}>Reserve</Button>
                   </div>
                 </div>

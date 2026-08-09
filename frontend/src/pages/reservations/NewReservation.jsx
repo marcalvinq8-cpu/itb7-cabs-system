@@ -26,6 +26,7 @@ export default function NewReservation() {
 
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
+    type:                    'reserve',
     facility_id:            preselected || '',
     reservation_date:       '',
     start_time:             '',
@@ -61,7 +62,7 @@ export default function NewReservation() {
   const mutation = useMutation({
     mutationFn: data => api.post('/reservations', data),
     onSuccess: res => {
-      toast.success('Reservation submitted successfully!')
+      toast.success(form.type === 'book' ? 'Booking submitted successfully!' : 'Reservation submitted successfully!')
       navigate(`/reservations/${res.data.id}`, { replace: true })
     },
     onError: err => {
@@ -138,6 +139,7 @@ export default function NewReservation() {
       number_of_participants: Number(form.number_of_participants),
       selected_amenities:     form.selected_amenities,
       terms_acknowledged:     false,
+      type:                   form.type,
     })
   }
 
@@ -155,8 +157,8 @@ export default function NewReservation() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="border-l-4 border-[#C0392B] pl-4 mb-6">
-        <h1 className="text-2xl font-bold text-[#1C2833]">New Reservation</h1>
-        <p className="text-[#717D7E] text-sm">Book a sports facility for your event.</p>
+        <h1 className="text-2xl font-bold text-[#1C2833]">{form.type === 'book' ? 'New Booking' : 'New Reservation'}</h1>
+        <p className="text-[#1C2833] text-sm">Book a sports facility for your event.</p>
       </div>
 
       {/* Stepper */}
@@ -165,14 +167,14 @@ export default function NewReservation() {
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div
               className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-colors ${
-                i <= step ? 'bg-[#C0392B] text-white' : 'bg-[#F2F3F4] text-[#717D7E]'
+                i <= step ? 'bg-[#C0392B] text-white' : 'bg-[#F2F3F4] text-[#1C2833]'
               }`}
             >
               {i < step ? <CheckCircle2 className="h-4 w-4" /> : i + 1}
             </div>
             <span
               className={`ml-2 text-sm font-medium hidden sm:inline ${
-                i <= step ? 'text-[#C0392B]' : 'text-[#717D7E]'
+                i <= step ? 'text-[#C0392B]' : 'text-[#1C2833]'
               }`}
             >
               {label}
@@ -189,6 +191,30 @@ export default function NewReservation() {
           {/* ── Step 0: Schedule ── */}
           {step === 0 && (
             <>
+              <div>
+                <Label>Reservation Type *</Label>
+                <div className="mt-1 grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'reserve', title: 'Reserve', desc: 'Request now, pay to submit for approval. Staff reviews and confirms.' },
+                    { value: 'book',    title: 'Book',    desc: 'Pay now for instant confirmation. No approval wait.' },
+                  ].map(opt => (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setField('type', opt.value)}
+                      className={`text-left p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+                        form.type === opt.value
+                          ? 'border-[#C0392B] bg-[#FADBD8]/30'
+                          : 'border-[#E5E7E9] hover:bg-gray-50'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm text-[#1C2833]">{opt.title}</p>
+                      <p className="text-xs text-[#1C2833] mt-0.5">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {!preselected ? (
                 <div>
                   <Label>Facility *</Label>
@@ -319,7 +345,7 @@ export default function NewReservation() {
                 <Label>
                   Number of Participants *
                   {facilityDetail?.capacity && (
-                    <span className="text-gray-400 font-normal ml-1">
+                    <span className="text-[#1C2833] font-normal ml-1">
                       (max {facilityDetail.capacity})
                     </span>
                   )}
@@ -358,7 +384,7 @@ export default function NewReservation() {
                           />
                           <div>
                             <span className="text-sm text-gray-700 font-medium">{a.name}</span>
-                            <span className="text-xs text-gray-400 ml-1">×{a.quantity}</span>
+                            <span className="text-xs text-[#1C2833] ml-1">×{a.quantity}</span>
                           </div>
                         </label>
                       ))}
@@ -374,6 +400,7 @@ export default function NewReservation() {
               <h3 className="font-semibold text-gray-900">Review Your Reservation</h3>
               <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden text-sm">
                 {[
+                  ['Type',         form.type === 'book' ? 'Book (instant confirm)' : 'Reserve (requires approval)'],
                   ['Facility',     activeFacility?.name],
                   ['Date',         form.reservation_date],
                   ['Time',         `${form.start_time} – ${form.end_time}`],
@@ -391,14 +418,16 @@ export default function NewReservation() {
                   ],
                 ].map(([label, value]) => (
                   <div key={label} className="flex gap-4 px-4 py-2.5">
-                    <span className="font-medium text-gray-500 w-28 shrink-0">{label}</span>
+                    <span className="font-medium text-[#1C2833] w-28 shrink-0">{label}</span>
                     <span className="text-gray-900">{value}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-sm text-[#717D7E] bg-[#FADBD8]/20 p-3 rounded-lg border border-[#F1948A]/20">
-                After submission, your reservation will be <strong>pending admin approval</strong>.
-                Once approved, you will review the terms and complete payment to confirm.
+              <p className="text-sm text-[#1C2833] bg-[#FADBD8]/20 p-3 rounded-lg border border-[#F1948A]/20">
+                After submission, you'll be asked to <strong>review the terms and complete payment</strong>.
+                {form.type === 'book'
+                  ? ' Once payment is received, your booking is confirmed instantly — no approval wait.'
+                  : ' Once payment is received, your reservation will be reviewed for final approval.'}
               </p>
             </div>
           )}
@@ -423,7 +452,7 @@ export default function NewReservation() {
                 loading={mutation.isPending}
                 disabled={mutation.isPending}
               >
-                Submit Reservation
+                {form.type === 'book' ? 'Submit Booking' : 'Submit Reservation'}
               </Button>
             )}
           </div>

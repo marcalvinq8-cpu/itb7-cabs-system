@@ -29,7 +29,7 @@ export default function ReceiptModal({ reservationId, onClose }) {
 
   const footer = (
     <div className="flex justify-between items-center">
-      <p className="text-xs text-gray-400">Keep this receipt for your records.</p>
+      <p className="text-xs text-[#1C2833]">Keep this receipt for your records.</p>
       <Button variant="outline" onClick={downloadPdf} className="flex items-center gap-1.5">
         <Download className="h-4 w-4" /> Download PDF
       </Button>
@@ -69,11 +69,11 @@ function ReceiptBody({ reservation: r }) {
         {/* Client */}
         {r.user && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Billed To</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-2">Billed To</h3>
             <p className="font-semibold text-gray-900">{r.user.full_name}</p>
-            <p className="text-sm text-gray-500">{r.user.email}</p>
+            <p className="text-sm text-[#1C2833]">{r.user.email}</p>
             {r.user.contact_number && (
-              <p className="text-sm text-gray-500">{r.user.contact_number}</p>
+              <p className="text-sm text-[#1C2833]">{r.user.contact_number}</p>
             )}
           </section>
         )}
@@ -82,7 +82,7 @@ function ReceiptBody({ reservation: r }) {
 
         {/* Booking */}
         <section>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Booking Details</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-3">Booking Details</h3>
           <dl className="space-y-2 text-sm">
             {[
               ['Reservation ID', `#${r.id}`],
@@ -95,7 +95,7 @@ function ReceiptBody({ reservation: r }) {
               ['Purpose',        r.purpose],
             ].map(([label, value]) => (
               <div key={label} className="flex gap-3">
-                <dt className="text-gray-400 w-36 shrink-0">{label}</dt>
+                <dt className="text-[#1C2833] w-36 shrink-0">{label}</dt>
                 <dd className="text-gray-900 font-medium">{value ?? '—'}</dd>
               </div>
             ))}
@@ -107,7 +107,7 @@ function ReceiptBody({ reservation: r }) {
         {/* Payment */}
         {r.payment && (
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Payment Details</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-3">Payment Details</h3>
             <dl className="space-y-2 text-sm">
               {[
                 ['Method',    r.payment.payment_method ?? '—'],
@@ -116,7 +116,7 @@ function ReceiptBody({ reservation: r }) {
                 ['Receipt #', r.payment.receipt_number ?? '—'],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-3">
-                  <dt className="text-gray-400 w-36 shrink-0">{label}</dt>
+                  <dt className="text-[#1C2833] w-36 shrink-0">{label}</dt>
                   <dd className="text-gray-900 font-medium">{value}</dd>
                 </div>
               ))}

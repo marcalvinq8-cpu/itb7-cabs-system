@@ -9,17 +9,23 @@ import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import Input from '@/components/ui/Input'
 import Label from '@/components/ui/Label'
+import PaymentModal from '@/components/PaymentModal'
+import ReceiptModal from '@/components/ReceiptModal'
 
 const STEPS = ['Schedule', 'Details', 'Terms', 'Review']
 
-const TERMS = [
+const termsFor = type => [
   {
     heading: '1. Reservation Policy',
-    body: 'All reservations are subject to availability and must be approved by CABS administration. A booking is only confirmed after approval and full payment of the booking fee.',
+    body: type === 'book'
+      ? 'All bookings are subject to availability. A "Book" reservation is confirmed automatically as soon as full payment is received — no staff approval is required.'
+      : 'All reservations are subject to availability. A "Reserve" request is only confirmed after full payment of the booking fee and approval by CABS administration.',
   },
   {
     heading: '2. Payment',
-    body: 'Full payment is required to confirm your booking. Accepted methods include GCash, Maya, and online banking. Payment must be completed within 24 hours of approval or the reservation may be forfeited.',
+    body: type === 'book'
+      ? 'Full payment is required to instantly confirm your booking. Accepted methods include GCash, Maya, and online banking.'
+      : 'Full payment is required before your reservation can be reviewed for approval. Accepted methods include GCash, Maya, and online banking. Unpaid requests may be forfeited if payment is not completed promptly.',
   },
   {
     heading: '3. Cancellation & Refund',
@@ -50,6 +56,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
 
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
+    type:                    'reserve',
     facility_id:            preselectedFacility || '',
     reservation_date:       '',
     start_time:             '',
@@ -60,6 +67,8 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
   })
   const [errors,  setErrors]  = useState({})
   const [agreed,  setAgreed]  = useState(false)
+  const [createdId,   setCreatedId]   = useState(null)
+  const [showReceipt, setShowReceipt] = useState(false)
 
   const { data: facilities = [], isLoading: loadingFacilities } = useQuery({
     queryKey: ['facilities'],
@@ -85,10 +94,10 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
 
   const mutation = useMutation({
     mutationFn: data => api.post('/reservations', data),
-    onSuccess: () => {
-      toast.success('Reservation submitted successfully!')
+    onSuccess: res => {
+      toast.success(form.type === 'book' ? 'Booking submitted! Complete payment to continue.' : 'Reservation submitted! Complete payment to continue.')
       queryClient.invalidateQueries({ queryKey: ['reservations'] })
-      onClose()
+      setCreatedId(res.data.id)
     },
     onError: err => toast.error(err.response?.data?.message || 'Failed to submit reservation.'),
   })
@@ -162,6 +171,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
       number_of_participants: Number(form.number_of_participants),
       selected_amenities:     form.selected_amenities,
       terms_acknowledged:     true,
+      type:                   form.type,
     })
   }
 
@@ -175,6 +185,20 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
   const estimatedCost = durationHours > 0 && activeFacility
     ? durationHours * Number(activeFacility.price_per_hour)
     : 0
+
+  // Reservation created — hand off straight to payment instead of closing the wizard.
+  if (createdId) {
+    if (showReceipt) {
+      return <ReceiptModal reservationId={createdId} onClose={onClose} />
+    }
+    return (
+      <PaymentModal
+        reservationId={createdId}
+        onClose={onClose}
+        onViewReceipt={() => setShowReceipt(true)}
+      />
+    )
+  }
 
   const footer = (
     <div className="flex justify-between items-center">
@@ -191,25 +215,25 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
         </Button>
       ) : (
         <Button onClick={submit} loading={mutation.isPending} disabled={mutation.isPending}>
-          Submit Reservation
+          {form.type === 'book' ? 'Submit Booking' : 'Submit Reservation'}
         </Button>
       )}
     </div>
   )
 
   return (
-    <Modal title="New Reservation" onClose={onClose} size="2xl" footer={footer}>
+    <Modal title={form.type === 'book' ? 'New Booking' : 'New Reservation'} onClose={onClose} size="2xl" footer={footer}>
 
       {/* Stepper */}
       <div className="flex items-center mb-6">
         {STEPS.map((label, i) => (
           <div key={i} className="flex items-center flex-1 last:flex-none">
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors ${
-              i <= step ? 'bg-[#C0392B] text-white' : 'bg-[#F2F3F4] text-[#717D7E]'
+              i <= step ? 'bg-[#C0392B] text-white' : 'bg-[#F2F3F4] text-[#1C2833]'
             }`}>
               {i < step ? <CheckCircle2 className="h-3.5 w-3.5" /> : i + 1}
             </div>
-            <span className={`ml-1.5 text-xs font-medium hidden sm:inline ${i <= step ? 'text-[#C0392B]' : 'text-[#717D7E]'}`}>
+            <span className={`ml-1.5 text-xs font-medium hidden sm:inline ${i <= step ? 'text-[#C0392B]' : 'text-[#1C2833]'}`}>
               {label}
             </span>
             {i < STEPS.length - 1 && (
@@ -224,6 +248,30 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
         {/* ── Step 0: Schedule ── */}
         {step === 0 && (
           <>
+            <div>
+              <Label>Reservation Type *</Label>
+              <div className="mt-1 grid grid-cols-2 gap-3">
+                {[
+                  { value: 'reserve', title: 'Reserve', desc: 'Request now, pay to submit for approval. Staff reviews and confirms.' },
+                  { value: 'book',    title: 'Book',    desc: 'Pay now for instant confirmation. No approval wait.' },
+                ].map(opt => (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setField('type', opt.value)}
+                    className={`text-left p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+                      form.type === opt.value
+                        ? 'border-[#C0392B] bg-[#FADBD8]/30'
+                        : 'border-[#E5E7E9] hover:bg-gray-50'
+                    }`}
+                  >
+                    <p className="font-semibold text-sm text-[#1C2833]">{opt.title}</p>
+                    <p className="text-xs text-[#1C2833] mt-0.5">{opt.desc}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {!preselectedFacility ? (
               <div>
                 <Label>Facility *</Label>
@@ -329,7 +377,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
               <Label>
                 Number of Participants *
                 {facilityDetail?.capacity && (
-                  <span className="text-gray-400 font-normal ml-1">(max {facilityDetail.capacity})</span>
+                  <span className="text-[#1C2833] font-normal ml-1">(max {facilityDetail.capacity})</span>
                 )}
               </Label>
               <Input type="number" min={1} max={facilityDetail?.capacity}
@@ -350,7 +398,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
                         onChange={() => toggleAmenity(a.id)} />
                       <div>
                         <span className="text-sm text-gray-700 font-medium">{a.name}</span>
-                        <span className="text-xs text-gray-400 ml-1">×{a.quantity}</span>
+                        <span className="text-xs text-[#1C2833] ml-1">×{a.quantity}</span>
                       </div>
                     </label>
                   ))}
@@ -367,13 +415,13 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
               <FileText className="h-5 w-5 text-[#C0392B]" />
               <h3 className="font-semibold text-[#1C2833]">Terms and Conditions</h3>
             </div>
-            <p className="text-xs text-[#717D7E] mb-3">Please read and accept the terms before submitting your reservation.</p>
+            <p className="text-xs text-[#1C2833] mb-3">Please read and accept the terms before submitting your reservation.</p>
 
             <div className="border border-[#E5E7E9] rounded-lg divide-y divide-[#F2F3F4] max-h-56 overflow-y-auto">
-              {TERMS.map(({ heading, body }) => (
+              {termsFor(form.type).map(({ heading, body }) => (
                 <div key={heading} className="px-4 py-3">
                   <h4 className="text-xs font-semibold text-gray-900 mb-0.5">{heading}</h4>
-                  <p className="text-xs text-gray-500 leading-relaxed">{body}</p>
+                  <p className="text-xs text-[#1C2833] leading-relaxed">{body}</p>
                 </div>
               ))}
             </div>
@@ -398,6 +446,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
             <h3 className="font-semibold text-gray-900">Review Your Reservation</h3>
             <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden text-sm">
               {[
+                ['Type',         form.type === 'book' ? 'Book (instant confirm)' : 'Reserve (requires approval)'],
                 ['Facility',     activeFacility?.name],
                 ['Date',         form.reservation_date],
                 ['Time',         form.start_time && form.end_time ? `${fmt12(form.start_time)} – ${fmt12(form.end_time)}` : '—'],
@@ -413,14 +462,16 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
                 ['Terms',        <span key="t" className="text-[#27AE60] font-medium">Accepted</span>],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-4 px-4 py-2.5">
-                  <span className="font-medium text-gray-500 w-28 shrink-0">{label}</span>
+                  <span className="font-medium text-[#1C2833] w-28 shrink-0">{label}</span>
                   <span className="text-gray-900">{value}</span>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-[#717D7E] bg-[#FADBD8]/20 p-3 rounded-lg border border-[#F1948A]/20">
-              After submission, your reservation will be <strong>pending admin approval</strong>.
-              Once approved, you can proceed directly to payment.
+            <p className="text-sm text-[#1C2833] bg-[#FADBD8]/20 p-3 rounded-lg border border-[#F1948A]/20">
+              After submission, you'll be asked to <strong>complete payment</strong>.
+              {form.type === 'book'
+                ? ' Once payment is received, your booking is confirmed instantly — no approval wait.'
+                : ' Once payment is received, your reservation will be reviewed for final approval.'}
             </p>
           </div>
         )}

@@ -61,7 +61,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onToggle }) {
   return (
     <>
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={onMobileClose} />
+        <div className="fixed inset-0 bg-black/40 z-30 md:hidden cursor-pointer" onClick={onMobileClose} />
       )}
 
       <aside

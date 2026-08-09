@@ -80,14 +80,14 @@ export default function ProfilePage() {
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#1C2833] hover:text-gray-800 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">My Profile</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Manage your account information</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Manage your account information</p>
       </div>
 
       {/* Identity banner */}
@@ -99,7 +99,7 @@ export default function ProfilePage() {
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-gray-900 truncate">{user?.full_name}</p>
-          <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+          <p className="text-sm text-[#1C2833] truncate">{user?.email}</p>
         </div>
         <div className="ml-auto shrink-0">
           <Badge status={user?.role} />
@@ -110,7 +110,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-4 w-4 text-gray-500" /> Personal Information
+            <User className="h-4 w-4 text-[#1C2833]" /> Personal Information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -186,7 +186,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Lock className="h-4 w-4 text-gray-500" /> Change Password
+            <Lock className="h-4 w-4 text-[#1C2833]" /> Change Password
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

@@ -37,8 +37,8 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        if ($reservation->status !== 'approved') {
-            return response()->json(['message' => 'Reservation must be approved before payment.'], 422);
+        if ($reservation->status !== 'pending') {
+            return response()->json(['message' => 'This reservation is no longer awaiting payment.'], 422);
         }
 
         if (!$reservation->terms_acknowledged) {
@@ -114,8 +114,8 @@ class PaymentController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        if ($reservation->status !== 'approved') {
-            return response()->json(['message' => 'Reservation must be approved before payment.'], 422);
+        if ($reservation->status !== 'pending') {
+            return response()->json(['message' => 'This reservation is no longer awaiting payment.'], 422);
         }
 
         if (!$reservation->terms_acknowledged) {
@@ -358,22 +358,42 @@ class PaymentController extends Controller
             'receipt_number' => $receiptNumber,
         ]);
 
-        $payment->reservation->update(['status' => 'confirmed']);
-
         $reservation = $payment->reservation->load(['user', 'facility']);
+
+        if ($reservation->type === 'book') {
+            // Instant booking: payment alone confirms the reservation, no staff approval needed.
+            $reservation->update(['status' => 'confirmed']);
+
+            NotificationService::notifyUser(
+                $reservation->user,
+                'payment_success',
+                'Booking Confirmed',
+                "Your payment of ₱{$payment->amount} for {$reservation->facility->name} on {$reservation->reservation_date->format('M d, Y')} has been received. Receipt: {$receiptNumber}. Your booking is confirmed!",
+                $reservation->id
+            );
+
+            NotificationService::notifyAdmins(
+                'payment_received',
+                'Booking Confirmed',
+                "{$reservation->user->full_name} completed payment of ₱{$payment->amount} for {$reservation->facility->name}. Receipt: {$receiptNumber}. Booking confirmed automatically — no action needed.",
+                $reservation->id
+            );
+
+            return;
+        }
 
         NotificationService::notifyUser(
             $reservation->user,
             'payment_success',
-            'Payment Confirmed',
-            "Your payment of ₱{$payment->amount} for {$reservation->facility->name} on {$reservation->reservation_date->format('M d, Y')} has been confirmed. Receipt: {$receiptNumber}.",
+            'Payment Received',
+            "Your payment of ₱{$payment->amount} for {$reservation->facility->name} on {$reservation->reservation_date->format('M d, Y')} has been received. Receipt: {$receiptNumber}. Your reservation is now awaiting staff approval.",
             $reservation->id
         );
 
         NotificationService::notifyAdmins(
             'payment_received',
-            'Payment Received',
-            "{$reservation->user->full_name} completed payment of ₱{$payment->amount} for {$reservation->facility->name}. Receipt: {$receiptNumber}.",
+            'Payment Received — Awaiting Approval',
+            "{$reservation->user->full_name} completed payment of ₱{$payment->amount} for {$reservation->facility->name}. Receipt: {$receiptNumber}. Please review and approve.",
             $reservation->id
         );
     }

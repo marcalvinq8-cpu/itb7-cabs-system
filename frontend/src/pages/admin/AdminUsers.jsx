@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Search, ChevronLeft, ChevronRight, Users, UserCheck, ShieldCheck, Briefcase } from 'lucide-react'
+import { Plus, Pencil, Trash2, ChevronLeft, ChevronRight, Users, UserCheck, ShieldCheck, Briefcase } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -10,6 +10,7 @@ import Spinner from '@/components/ui/Spinner'
 import Input from '@/components/ui/Input'
 import Label from '@/components/ui/Label'
 import Modal from '@/components/ui/Modal'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
 const ROLE_COLORS = {
   client:        { bg: 'bg-blue-100',   text: 'text-blue-700'  },
@@ -131,6 +132,10 @@ export default function AdminUsers() {
   const changeRole   = val => { setRole(val);   setPage(1) }
 
   const rows     = data?.data         ?? []
+  const searchSuggestions = useMemo(() => [
+    ...rows.map(u => u.full_name),
+    ...rows.map(u => u.email),
+  ], [rows])
   const lastPage = data?.last_page    ?? 1
   const curPage  = data?.current_page ?? 1
   const total    = data?.total        ?? 0
@@ -146,7 +151,7 @@ export default function AdminUsers() {
       <div className="flex items-center justify-between">
         <div className="border-l-4 border-[#C0392B] pl-4">
           <h1 className="text-2xl font-bold text-[#1C2833]">User Management</h1>
-          <p className="text-[#717D7E] text-sm mt-0.5">Manage system accounts and roles</p>
+          <p className="text-[#1C2833] text-sm mt-0.5">Manage system accounts and roles</p>
         </div>
         <Button onClick={openCreate} className="flex items-center gap-2">
           <Plus className="h-4 w-4" /> Add User
@@ -167,7 +172,7 @@ export default function AdminUsers() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
@@ -183,22 +188,22 @@ export default function AdminUsers() {
               className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors ${
                 role === r
                   ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                  : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                  : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
               }`}
             >
               {r === 'all' ? 'All Roles' : r}
             </button>
           ))}
         </div>
-        <div className="ml-auto relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            value={search}
-            onChange={e => changeSearch(e.target.value)}
-            placeholder="Search name or email…"
-            className="pl-9 h-9 text-sm w-60"
-          />
-        </div>
+        <SearchAutocomplete
+          value={search}
+          onChange={changeSearch}
+          suggestions={searchSuggestions}
+          placeholder="Search name or email…"
+          wrapperClassName="ml-auto relative"
+          iconClassName="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1C2833] pointer-events-none"
+          inputClassName="block w-60 rounded-lg border border-gray-300 pl-9 pr-3 py-2 h-9 text-sm bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
       </div>
 
       {/* User list */}
@@ -207,7 +212,7 @@ export default function AdminUsers() {
           {isLoading ? (
             <div className="flex justify-center py-16"><Spinner size="lg" /></div>
           ) : rows.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">No users found.</div>
+            <div className="text-center py-16 text-[#1C2833]">No users found.</div>
           ) : (
             <div className={`divide-y divide-[#E5E7E9] transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
               {/* Table header */}
@@ -230,7 +235,7 @@ export default function AdminUsers() {
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-sm text-[#1C2833] truncate">{u.full_name}</p>
-                        <p className="text-xs text-[#717D7E] truncate md:hidden">{u.email}</p>
+                        <p className="text-xs text-[#1C2833] truncate md:hidden">{u.email}</p>
                       </div>
                     </div>
 
@@ -248,14 +253,14 @@ export default function AdminUsers() {
 
                     {/* Contact */}
                     <div className="col-span-2 hidden md:block">
-                      <p className="text-sm text-gray-500">{u.contact_number ?? '—'}</p>
+                      <p className="text-sm text-[#1C2833]">{u.contact_number ?? '—'}</p>
                     </div>
 
                     {/* Actions */}
                     <div className="col-span-1 flex gap-1 justify-end">
                       <button
                         onClick={() => openEdit(u)}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-[#2980B9] hover:bg-blue-50 transition-colors"
+                        className="p-1.5 rounded-lg text-[#1C2833] hover:text-[#2980B9] hover:bg-blue-50 transition-colors"
                         title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
@@ -263,7 +268,7 @@ export default function AdminUsers() {
                       {u.role !== 'administrator' && (
                         <button
                           onClick={() => setDeleteConfirm({ id: u.id, name: u.full_name })}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg text-[#1C2833] hover:text-red-600 hover:bg-red-50 transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -279,7 +284,7 @@ export default function AdminUsers() {
           {/* Pagination */}
           {lastPage > 1 && (
             <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
-              <p className="text-sm text-[#717D7E]">
+              <p className="text-sm text-[#1C2833]">
                 Page {curPage} of {lastPage} · <span className="font-medium text-[#1C2833]">{total}</span> users
               </p>
               <div className="flex gap-2">
@@ -362,7 +367,7 @@ export default function AdminUsers() {
               />
             </div>
             <div>
-              <Label>Age</Label>
+              <Label>Age <span className="text-[#1C2833] font-normal">(Optional)</span></Label>
               <Input
                 type="number"
                 min={1}
@@ -372,7 +377,7 @@ export default function AdminUsers() {
               />
             </div>
             <div>
-              <Label>Gender</Label>
+              <Label>Gender <span className="text-[#1C2833] font-normal">(Optional)</span></Label>
               <select
                 value={form.gender}
                 onChange={e => setF('gender', e.target.value)}

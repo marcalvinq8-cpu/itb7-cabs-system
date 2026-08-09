@@ -1,16 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
-import { Check, X, ChevronLeft, ChevronRight, CalendarDays, Clock, ClipboardList, AlertCircle, CheckCircle2, Banknote, Search } from 'lucide-react'
+import { Check, X, ChevronLeft, ChevronRight, CalendarDays, Clock, ClipboardList, AlertCircle, CheckCircle2, Banknote } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import TypeBadge from '@/components/ui/TypeBadge'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import Input from '@/components/ui/Input'
 import Label from '@/components/ui/Label'
 import Modal from '@/components/ui/Modal'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
 const STATUS_OPTIONS = [
   { value: 'all',       label: 'All'       },
@@ -121,6 +123,11 @@ export default function AdminReservations() {
   const changeDate   = d => { setDate(d);   setPage(1) }
 
   const allRows  = data?.data         ?? []
+  const searchSuggestions = useMemo(() => [
+    ...allRows.map(r => r.user?.full_name),
+    ...allRows.map(r => r.user?.email),
+    ...allRows.map(r => r.facility?.name),
+  ], [allRows])
   const rows     = allRows.filter(r => {
     const q = search.trim().toLowerCase()
     return !q ||
@@ -133,8 +140,8 @@ export default function AdminReservations() {
   const total    = data?.total        ?? 0
   const pending  = pendingData?.total ?? 0
 
-  const approvedCount  = rows.filter(r => r.status === 'approved').length
-  const confirmedCount = rows.filter(r => r.status === 'confirmed').length
+  const awaitingApprovalCount = rows.filter(r => r.status === 'pending' && r.payment?.status === 'paid').length
+  const confirmedCount        = rows.filter(r => r.status === 'confirmed').length
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -142,16 +149,16 @@ export default function AdminReservations() {
       {/* Header */}
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Reservations</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">Review and manage all reservation requests</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">Review and manage all reservation requests</p>
       </div>
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: 'Total',     value: total,          icon: ClipboardList,  color: 'text-[#2980B9] bg-[#D6EAF8]' },
-          { label: 'Pending',   value: pending,        icon: AlertCircle,    color: 'text-[#F39C12] bg-[#FEF9E7]' },
-          { label: 'Approved',  value: approvedCount,  icon: CheckCircle2,   color: 'text-[#27AE60] bg-[#D5F5E3]' },
-          { label: 'Confirmed', value: confirmedCount, icon: Banknote,       color: 'text-[#8E44AD] bg-[#F5EEF8]' },
+          { label: 'Pending',   value: pending,             icon: AlertCircle,    color: 'text-[#F39C12] bg-[#FEF9E7]' },
+          { label: 'Awaiting Approval', value: awaitingApprovalCount, icon: CheckCircle2, color: 'text-[#27AE60] bg-[#D5F5E3]' },
+          { label: 'Confirmed', value: confirmedCount,      icon: Banknote,       color: 'text-[#8E44AD] bg-[#F5EEF8]' },
         ].map(({ label, value, icon: Icon, color }) => (
           <Card key={label} className="hover:shadow-md transition-shadow">
             <CardContent className="py-4">
@@ -159,23 +166,20 @@ export default function AdminReservations() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Search bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#C0392B] pointer-events-none" />
-        <input
-          type="text"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1) }}
-          placeholder="Search by client name, email, or facility…"
-          className="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
-        />
-      </div>
+      <SearchAutocomplete
+        value={search}
+        onChange={v => { setSearch(v); setPage(1) }}
+        suggestions={searchSuggestions}
+        placeholder="Search by client name, email, or facility…"
+        inputClassName="w-full pl-11 pr-4 h-11 rounded-xl border-2 border-[#FADBD8] bg-white text-sm text-[#1C2833] placeholder-[#717D7E] shadow-sm focus:outline-none focus:border-[#C0392B] focus:ring-2 focus:ring-[#FADBD8] transition-colors"
+      />
 
       {/* Filter bar */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -187,7 +191,7 @@ export default function AdminReservations() {
               className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                 status === s.value
                   ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                  : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                  : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
               }`}
             >
               {s.label}
@@ -213,7 +217,7 @@ export default function AdminReservations() {
           {isLoading ? (
             <div className="flex justify-center py-20"><Spinner size="lg" /></div>
           ) : rows.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
+            <div className="flex flex-col items-center justify-center py-20 text-[#1C2833] gap-2">
               <CalendarDays className="h-10 w-10 opacity-30" />
               <p className="text-sm">No reservations found.</p>
             </div>
@@ -222,11 +226,11 @@ export default function AdminReservations() {
               {/* Column headers */}
               <div className="grid grid-cols-12 px-5 py-3 bg-[#FADBD8]/40 text-xs font-semibold text-[#96281B] uppercase tracking-wide border-b border-[#E5E7E9]">
                 <div className="col-span-3">Client</div>
-                <div className="col-span-3">Facility</div>
+                <div className="col-span-2">Facility</div>
                 <div className="col-span-2">Date</div>
                 <div className="col-span-2">Time</div>
                 <div className="col-span-1">Amount</div>
-                <div className="col-span-1 text-right">Status</div>
+                <div className="col-span-2 text-right">Status</div>
               </div>
 
               <div className="divide-y divide-[#E5E7E9]">
@@ -250,22 +254,22 @@ export default function AdminReservations() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-[#1C2833] truncate">{name || '—'}</p>
-                          <p className="text-xs text-[#717D7E] truncate">{r.user?.email}</p>
+                          <p className="text-xs text-[#1C2833] truncate">{r.user?.email}</p>
                         </div>
                       </div>
 
                       {/* Facility */}
-                      <div className="col-span-3 min-w-0">
+                      <div className="col-span-2 min-w-0">
                         <p className="text-sm font-medium text-[#1C2833] truncate">{r.facility?.name ?? '—'}</p>
                         {r.facility?.location && (
-                          <p className="text-xs text-[#717D7E] truncate">{r.facility.location}</p>
+                          <p className="text-xs text-[#1C2833] truncate">{r.facility.location}</p>
                         )}
                       </div>
 
                       {/* Date */}
                       <div className="col-span-2">
                         <p className="text-sm text-[#1C2833] flex items-center gap-1">
-                          <CalendarDays className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <CalendarDays className="h-3.5 w-3.5 text-[#1C2833] shrink-0" />
                           {r.reservation_date ? format(parseISO(r.reservation_date), 'MMM d, yyyy') : '—'}
                         </p>
                       </div>
@@ -273,11 +277,11 @@ export default function AdminReservations() {
                       {/* Time */}
                       <div className="col-span-2">
                         <p className="text-sm text-[#1C2833] flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <Clock className="h-3.5 w-3.5 text-[#1C2833] shrink-0" />
                           {r.start_time?.slice(0, 5)} – {r.end_time?.slice(0, 5)}
                         </p>
                         {duration != null && (
-                          <p className="text-xs text-[#717D7E] mt-0.5">{duration}h duration</p>
+                          <p className="text-xs text-[#1C2833] mt-0.5">{duration}h duration</p>
                         )}
                       </div>
 
@@ -289,24 +293,33 @@ export default function AdminReservations() {
                       </div>
 
                       {/* Status + quick actions */}
-                      <div className="col-span-1 flex flex-col items-end gap-2">
-                        <Badge status={r.status} />
+                      <div className="col-span-2 flex flex-col items-end gap-2">
+                        <div className="flex flex-wrap items-center justify-end gap-1">
+                          <TypeBadge type={r.type} />
+                          <Badge status={r.status} />
+                        </div>
                         {r.status === 'pending' && (
                           <div className="flex gap-1" onClick={e => e.stopPropagation()}>
-                            <button
-                              onClick={() => approveMutation.mutate(r.id)}
-                              className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors"
-                              title="Approve"
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => { setRejectModal({ id: r.id, clientName: name }); setRejectNote('') }}
-                              className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                              title="Reject"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                            </button>
+                            {r.payment?.status === 'paid' ? (
+                              <button
+                                onClick={() => approveMutation.mutate(r.id)}
+                                className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors cursor-pointer"
+                                title="Approve"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-[#B7950B] self-center">Awaiting payment</span>
+                            )}
+                            {r.payment?.status !== 'paid' && (
+                              <button
+                                onClick={() => { setRejectModal({ id: r.id, clientName: name }); setRejectNote('') }}
+                                className="p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors cursor-pointer"
+                                title="Reject"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -320,7 +333,7 @@ export default function AdminReservations() {
           {/* Pagination */}
           {lastPage > 1 && (
             <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
-              <p className="text-sm text-[#717D7E]">
+              <p className="text-sm text-[#1C2833]">
                 Page {curPage} of {lastPage} &middot; {total} total
               </p>
               <div className="flex gap-2">
@@ -357,23 +370,29 @@ export default function AdminReservations() {
             footer={
               <div className="flex items-center justify-between gap-2">
                 {r.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button
-                      loading={approveMutation.isPending}
-                      onClick={() => approveMutation.mutate(r.id, { onSuccess: () => setDetailModal(null) })}
-                    >
-                      <Check className="h-3.5 w-3.5" /> Approve
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => {
-                        setDetailModal(null)
-                        setRejectModal({ id: r.id, clientName: r.user?.full_name ?? '' })
-                        setRejectNote('')
-                      }}
-                    >
-                      <X className="h-3.5 w-3.5" /> Reject
-                    </Button>
+                  <div className="flex items-center gap-2">
+                    {r.payment?.status === 'paid' ? (
+                      <Button
+                        loading={approveMutation.isPending}
+                        onClick={() => approveMutation.mutate(r.id, { onSuccess: () => setDetailModal(null) })}
+                      >
+                        <Check className="h-3.5 w-3.5" /> Approve
+                      </Button>
+                    ) : (
+                      <>
+                        <span className="text-sm text-[#B7950B]">Awaiting payment</span>
+                        <Button
+                          variant="danger"
+                          onClick={() => {
+                            setDetailModal(null)
+                            setRejectModal({ id: r.id, clientName: r.user?.full_name ?? '' })
+                            setRejectNote('')
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" /> Reject
+                        </Button>
+                      </>
+                    )}
                   </div>
                 )}
                 {r.status === 'confirmed' && (() => {
@@ -388,12 +407,12 @@ export default function AdminReservations() {
                       <Check className="h-3.5 w-3.5" /> Mark as Completed
                     </Button>
                   ) : (
-                    <span className="text-xs text-gray-400 italic">
+                    <span className="text-xs text-[#1C2833] italic">
                       Available after {r.end_time?.slice(0, 5)} on {r.reservation_date}
                     </span>
                   )
                 })()}
-                {['pending', 'approved'].includes(r.status) && r.payment?.status !== 'paid' && (
+                {r.status === 'pending' && r.payment?.status !== 'paid' && (
                   <Button
                     variant="danger"
                     loading={cancelMutation.isPending}
@@ -406,14 +425,18 @@ export default function AdminReservations() {
                     <X className="h-3.5 w-3.5" /> Cancel Reservation
                   </Button>
                 )}
-                {!['pending', 'approved', 'confirmed'].includes(r.status) && <span />}
+                {!['pending', 'confirmed'].includes(r.status) && <span />}
                 <Button variant="outline" onClick={() => setDetailModal(null)}>Close</Button>
               </div>
             }
           >
             <dl className="space-y-3 text-sm">
               <div className="flex gap-2">
-                <dt className="text-gray-500 w-28 shrink-0">Status</dt>
+                <dt className="text-[#1C2833] w-28 shrink-0">Type</dt>
+                <dd><TypeBadge type={r.type} /></dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="text-[#1C2833] w-28 shrink-0">Status</dt>
                 <dd><Badge status={r.status} /></dd>
               </div>
               {[
@@ -429,13 +452,13 @@ export default function AdminReservations() {
                 ['Payment',      r.payment?.status ?? '—'],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-2">
-                  <dt className="text-gray-500 w-28 shrink-0">{label}</dt>
+                  <dt className="text-[#1C2833] w-28 shrink-0">{label}</dt>
                   <dd className="text-gray-900 font-medium">{value ?? '—'}</dd>
                 </div>
               ))}
               {r.admin_note && (
                 <div className="flex gap-2">
-                  <dt className="text-gray-500 w-28 shrink-0">Admin Note</dt>
+                  <dt className="text-[#1C2833] w-28 shrink-0">Admin Note</dt>
                   <dd className="text-orange-700">{r.admin_note}</dd>
                 </div>
               )}

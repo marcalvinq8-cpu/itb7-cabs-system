@@ -7,6 +7,7 @@ import api from '@/api/axios'
 import Modal from '@/components/ui/Modal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import TypeBadge from '@/components/ui/TypeBadge'
 import Button from '@/components/ui/Button'
 import Spinner from '@/components/ui/Spinner'
 import PaymentModal from '@/components/PaymentModal'
@@ -53,10 +54,11 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
 
   const r = reservation
 
-  const canCancel = r && ['pending', 'approved'].includes(r.status) && r.payment?.status !== 'paid'
-  const needTerms = r && r.status === 'approved' && !r.terms_acknowledged
-  const canPay    = r && r.status === 'approved' && r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canCancel = r && r.status === 'pending' && r.payment?.status !== 'paid'
+  const needTerms = r && r.status === 'pending' && !r.terms_acknowledged && r.payment?.status !== 'paid'
+  const canPay    = r && r.status === 'pending' && r.terms_acknowledged && r.payment?.status !== 'paid'
   const hasPaid   = r && r.payment?.status === 'paid'
+  const awaitingApproval = r && r.status === 'pending' && hasPaid
 
   const duration  = r?.start_time && r?.end_time
     ? (new Date(`2000-01-01T${r.end_time}`) - new Date(`2000-01-01T${r.start_time}`)) / 3_600_000
@@ -65,7 +67,7 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
   const title = r ? `Reservation #${r.id}` : 'Reservation Details'
 
   const footer = r && (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {needTerms && (
         <Button size="sm" onClick={() => toast.info('Please review your terms below.')}>
           Review Terms
@@ -73,6 +75,9 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
       )}
       {canPay && (
         <Button size="sm" onClick={() => setShowPayment(true)}>Proceed to Payment</Button>
+      )}
+      {awaitingApproval && (
+        <span className="text-sm text-[#B7950B]">Payment received — awaiting staff approval.</span>
       )}
       {hasPaid && (
         <Button variant="outline" size="sm" onClick={() => setShowReceipt(true)}>View Receipt</Button>
@@ -112,6 +117,7 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
           <div className="space-y-4">
             {/* Status badges */}
             <div className="flex gap-2 flex-wrap">
+              <TypeBadge type={r.type} />
               <Badge status={r.status} />
               {r.payment && r.payment.status !== 'pending' && <Badge status={r.payment.status} />}
             </div>
@@ -131,7 +137,7 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
                     ['Submitted',    r.created_at ? format(parseISO(r.created_at), 'MMM d, yyyy h:mm a') : '—'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex gap-4 py-2.5">
-                      <dt className="font-medium text-gray-500 w-32 shrink-0">{label}</dt>
+                      <dt className="font-medium text-[#1C2833] w-32 shrink-0">{label}</dt>
                       <dd className="text-gray-900">{value ?? '—'}</dd>
                     </div>
                   ))}
@@ -171,7 +177,7 @@ export default function ReservationDetailModal({ reservationId, onClose }) {
                       ['Paid At',   r.payment.paid_at ? format(parseISO(r.payment.paid_at), 'MMM d, yyyy h:mm a') : '—'],
                     ].map(([label, value]) => (
                       <div key={label} className="flex gap-4 py-2.5">
-                        <dt className="font-medium text-gray-500 w-32 shrink-0">{label}</dt>
+                        <dt className="font-medium text-[#1C2833] w-32 shrink-0">{label}</dt>
                         <dd className="text-gray-900">{value}</dd>
                       </div>
                     ))}

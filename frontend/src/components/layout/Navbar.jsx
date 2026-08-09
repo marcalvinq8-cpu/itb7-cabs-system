@@ -69,7 +69,7 @@ function getRoute(n, role) {
     case 'new_reservation':
     case 'RESERVATION_SUBMITTED':  return isStaff ? '/admin/reservations' : (rid ? `/reservations/${rid}` : '/reservations')
     case 'reservation_approved':
-    case 'RESERVATION_APPROVED':   return rid ? `/reservations/${rid}/terms` : '/reservations'
+    case 'RESERVATION_APPROVED':   return rid ? `/reservations/${rid}` : '/reservations'
     case 'reservation_rejected':
     case 'RESERVATION_REJECTED':
     case 'reservation_cancelled':
@@ -121,7 +121,7 @@ export default function Navbar({ onMobileMenu }) {
         {/* Mobile breadcrumb */}
         <div className="lg:hidden flex items-center gap-1.5 text-sm min-w-0">
           <span className="font-medium text-[#1C2833]">CABS</span>
-          <ChevronRight className="h-3 w-3 text-[#717D7E] flex-shrink-0" />
+          <ChevronRight className="h-3 w-3 text-[#1C2833] flex-shrink-0" />
           <span className="text-[#C0392B] font-semibold truncate">{pageLabel}</span>
         </div>
 
@@ -150,7 +150,7 @@ export default function Navbar({ onMobileMenu }) {
 
           {notifOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+              <div className="fixed inset-0 z-40 cursor-pointer" onClick={() => setNotifOpen(false)} />
               <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-[#E5E7E9] z-50">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[#E5E7E9]">
                   <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export default function Navbar({ onMobileMenu }) {
                 </div>
                 <div className="max-h-72 overflow-y-auto divide-y divide-[#E5E7E9]">
                   {notifications.length === 0 ? (
-                    <p className="text-center text-sm text-[#717D7E] py-8">No notifications yet</p>
+                    <p className="text-center text-sm text-[#1C2833] py-8">No notifications yet</p>
                   ) : (
                     notifications.slice(0, 10).map(n => (
                       <div
@@ -179,7 +179,7 @@ export default function Navbar({ onMobileMenu }) {
                             n.read_at ? 'bg-[#E5E7E9]' : 'bg-[#C0392B]')} />
                           <div className="min-w-0">
                             <p className={cn('text-sm text-[#1C2833] line-clamp-1', !n.read_at && 'font-semibold')}>{n.title}</p>
-                            <p className="text-xs text-[#717D7E] mt-0.5 line-clamp-2">{n.message}</p>
+                            <p className="text-xs text-[#1C2833] mt-0.5 line-clamp-2">{n.message}</p>
                           </div>
                         </div>
                       </div>
@@ -206,7 +206,7 @@ export default function Navbar({ onMobileMenu }) {
           </div>
           <div className="hidden sm:block leading-tight">
             <p className="text-sm font-semibold text-[#1C2833]">{user?.full_name ?? '—'}</p>
-            <p className="text-[10px] text-[#717D7E]">{roleLabel}</p>
+            <p className="text-[10px] text-[#1C2833]">{roleLabel}</p>
           </div>
         </Link>
       </div>
@@ -225,7 +225,7 @@ export default function Navbar({ onMobileMenu }) {
               'h-11 flex items-center px-4 text-sm font-medium transition-colors whitespace-nowrap border-b-2',
               isActive
                 ? 'text-[#C0392B] border-[#C0392B]'
-                : 'text-[#717D7E] border-transparent hover:text-[#1C2833]'
+                : 'text-[#1C2833] border-transparent hover:text-[#1C2833]'
             )}
           >
             {label}

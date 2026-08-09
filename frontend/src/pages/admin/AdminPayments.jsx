@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
-import { Banknote, CheckCircle2, Clock, CreditCard, XCircle, Search } from 'lucide-react'
+import { Banknote, CheckCircle2, Clock, CreditCard, XCircle } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Skeleton from '@/components/ui/Skeleton'
-import Input from '@/components/ui/Input'
+import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
 const STATUS_BORDER = {
   paid:      'border-l-[#27AE60]',
@@ -46,6 +46,12 @@ export default function AdminPayments() {
 
   const payments = data?.data ?? data ?? []
 
+  const searchSuggestions = useMemo(() => [
+    ...payments.map(p => p.receipt_number),
+    ...payments.map(p => p.reservation?.user?.full_name),
+    ...payments.map(p => p.reservation?.facility?.name),
+  ], [payments])
+
   const filtered = payments.filter(p => {
     const matchStatus = statusFilter === 'all' || p.status === statusFilter
     const q = search.toLowerCase()
@@ -81,7 +87,7 @@ export default function AdminPayments() {
       {/* Header */}
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Payments</h1>
-        <p className="text-[#717D7E] text-sm mt-0.5">All payment transactions and collection summary</p>
+        <p className="text-[#1C2833] text-sm mt-0.5">All payment transactions and collection summary</p>
       </div>
 
       {/* Stat cards */}
@@ -98,7 +104,7 @@ export default function AdminPayments() {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
@@ -114,29 +120,29 @@ export default function AdminPayments() {
               className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors ${
                 statusFilter === s
                   ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                  : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
+                  : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/20'
               }`}
             >
               {s === 'all' ? 'All' : s}
             </button>
           ))}
         </div>
-        <div className="sm:ml-auto relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search receipt, client, or facility…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm w-72"
-          />
-        </div>
+        <SearchAutocomplete
+          value={search}
+          onChange={setSearch}
+          suggestions={searchSuggestions}
+          placeholder="Search receipt, client, or facility…"
+          wrapperClassName="sm:ml-auto relative"
+          iconClassName="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#1C2833] pointer-events-none"
+          inputClassName="block w-72 rounded-lg border border-gray-300 pl-9 pr-3 py-2 h-9 text-sm bg-white placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
       </div>
 
       {/* Payment list */}
       <Card>
         <CardContent className="p-0">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
+            <div className="flex flex-col items-center justify-center py-20 text-[#1C2833] gap-2">
               <Banknote className="h-10 w-10 opacity-30" />
               <p className="text-sm">No payments found.</p>
             </div>
@@ -170,7 +176,7 @@ export default function AdminPayments() {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-[#1C2833] truncate">{name || '—'}</p>
-                          <p className="text-xs text-[#717D7E] truncate">{p.reservation?.facility?.name ?? '—'}</p>
+                          <p className="text-xs text-[#1C2833] truncate">{p.reservation?.facility?.name ?? '—'}</p>
                         </div>
                       </div>
 
@@ -187,7 +193,7 @@ export default function AdminPayments() {
                       {/* Method */}
                       <div className="col-span-2">
                         <p className="text-sm text-[#1C2833] flex items-center gap-1.5">
-                          <CreditCard className="h-3.5 w-3.5 text-gray-400 shrink-0" />
+                          <CreditCard className="h-3.5 w-3.5 text-[#1C2833] shrink-0" />
                           {method}
                         </p>
                       </div>

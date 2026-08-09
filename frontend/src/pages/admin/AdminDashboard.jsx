@@ -164,7 +164,7 @@ export default function AdminDashboard() {
               <CardContent className="px-5 py-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-[#717D7E] font-medium leading-tight">{label}</p>
+                    <p className="text-xs text-[#1C2833] font-medium leading-tight">{label}</p>
                     <p className="text-2xl font-bold text-[#1C2833] mt-1.5 leading-none">{value}</p>
                     {sub && (
                       <span className={`inline-flex items-center gap-1 text-[11px] font-medium mt-1.5 ${sub.positive ? 'text-[#27AE60]' : 'text-[#C0392B]'}`}>
@@ -194,13 +194,13 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-1">
             <div>
               <CardTitle className="text-sm font-semibold text-[#1C2833]">Reservations Over Time</CardTitle>
-              <p className="text-[11px] text-[#717D7E] mt-0.5">Daily bookings this week</p>
+              <p className="text-[11px] text-[#1C2833] mt-0.5">Daily bookings this week</p>
             </div>
-            <span className="text-[11px] text-[#717D7E] border border-[#E5E7E9] px-2 py-0.5 rounded-full">This Week</span>
+            <span className="text-[11px] text-[#1C2833] border border-[#E5E7E9] px-2 py-0.5 rounded-full">This Week</span>
           </CardHeader>
           <CardContent className="pt-2">
             {trends.length === 0 ? (
-              <div className="h-56 flex flex-col items-center justify-center text-[#717D7E] text-sm gap-2">
+              <div className="h-56 flex flex-col items-center justify-center text-[#1C2833] text-sm gap-2">
                 <ClipboardList className="h-8 w-8 opacity-20" />
                 No data yet
               </div>
@@ -233,13 +233,13 @@ export default function AdminDashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-1">
             <div>
               <CardTitle className="text-sm font-semibold text-[#1C2833]">Most Used Facilities</CardTitle>
-              <p className="text-[11px] text-[#717D7E] mt-0.5">Last 30 days</p>
+              <p className="text-[11px] text-[#1C2833] mt-0.5">Last 30 days</p>
             </div>
-            <span className="text-[11px] text-[#717D7E] border border-[#E5E7E9] px-2 py-0.5 rounded-full">30 Days</span>
+            <span className="text-[11px] text-[#1C2833] border border-[#E5E7E9] px-2 py-0.5 rounded-full">30 Days</span>
           </CardHeader>
           <CardContent className="pt-2">
             {facilityData.length === 0 ? (
-              <div className="h-56 flex flex-col items-center justify-center text-[#717D7E] text-sm gap-2">
+              <div className="h-56 flex flex-col items-center justify-center text-[#1C2833] text-sm gap-2">
                 <Building2 className="h-8 w-8 opacity-20" />
                 No data yet
               </div>
@@ -267,14 +267,14 @@ export default function AdminDashboard() {
         <CardHeader className="flex flex-row items-center justify-between pb-1">
           <div>
             <CardTitle className="text-sm font-semibold text-[#1C2833]">Revenue Overview</CardTitle>
-            <p className="text-[11px] text-[#717D7E] mt-0.5">Monthly collected payments</p>
+            <p className="text-[11px] text-[#1C2833] mt-0.5">Monthly collected payments</p>
           </div>
-          <span className="text-[11px] text-[#717D7E] border border-[#E5E7E9] px-2 py-0.5 rounded-full">12 Months</span>
+          <span className="text-[11px] text-[#1C2833] border border-[#E5E7E9] px-2 py-0.5 rounded-full">12 Months</span>
         </CardHeader>
         <CardContent className="pt-2">
           <div className="flex gap-8 items-center">
             <div className="flex-shrink-0 min-w-[140px] space-y-1">
-              <p className="text-xs text-[#717D7E]">Total This Month</p>
+              <p className="text-xs text-[#1C2833]">Total This Month</p>
               <p className="text-3xl font-bold text-[#1C2833]">₱{Number(totalRevenue).toLocaleString()}</p>
               {revenueChange !== 0 && (
                 <p className={`text-xs flex items-center gap-1 font-medium ${revenueChange > 0 ? 'text-[#27AE60]' : 'text-[#C0392B]'}`}>
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
             </div>
             <div className="flex-1">
               {revenue.length === 0 ? (
-                <div className="h-36 flex flex-col items-center justify-center text-[#717D7E] text-sm gap-2">
+                <div className="h-36 flex flex-col items-center justify-center text-[#1C2833] text-sm gap-2">
                   <Banknote className="h-8 w-8 opacity-20" />
                   No revenue data yet
                 </div>

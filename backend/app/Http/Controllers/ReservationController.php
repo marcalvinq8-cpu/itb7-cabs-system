@@ -55,6 +55,7 @@ class ReservationController extends Controller
             'selected_amenities'     => ['nullable', 'array'],
             'selected_amenities.*'   => ['integer', 'exists:amenities,id'],
             'terms_acknowledged'     => ['boolean'],
+            'type'                   => ['required', 'in:reserve,book'],
         ]);
 
         $facility = Facility::findOrFail($validated['facility_id']);
@@ -106,6 +107,7 @@ class ReservationController extends Controller
             'end_time'               => $validated['end_time'],
             'selected_amenities'     => $validated['selected_amenities'] ?? null,
             'status'                 => 'pending',
+            'type'                   => $validated['type'],
             'terms_acknowledged'     => $validated['terms_acknowledged'] ?? false,
             'terms_acknowledged_at'  => ($validated['terms_acknowledged'] ?? false) ? now() : null,
         ]);
@@ -118,14 +120,37 @@ class ReservationController extends Controller
             'status'         => 'pending',
         ]);
 
+        $typeLabel = $validated['type'] === 'book' ? 'a booking (instant confirm on payment)' : 'a reservation request';
+
         NotificationService::notifyAdmins(
             'new_reservation',
             'New Reservation Request',
-            "{$request->user()->full_name} submitted a reservation for {$facility->name} on {$validated['reservation_date']} from {$validated['start_time']} to {$validated['end_time']}.",
+            "{$request->user()->full_name} submitted {$typeLabel} for {$facility->name} on {$validated['reservation_date']} from {$validated['start_time']} to {$validated['end_time']}.",
             $reservation->id
         );
 
         return response()->json($reservation->load(['facility', 'payment']), 201);
+    }
+
+    // ─── Destroy (abandoned/unpaid) ───────────────────────────────────────────
+
+    public function destroy(Request $request, $id)
+    {
+        $user        = $request->user();
+        $reservation = Reservation::with('payment')->findOrFail($id);
+
+        if ($reservation->user_id !== $user->id) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
+        if ($reservation->status !== 'pending' || $reservation->payment?->status === 'paid') {
+            return response()->json(['message' => 'Only unpaid pending reservations can be removed.'], 422);
+        }
+
+        $reservation->payment?->delete();
+        $reservation->delete();
+
+        return response()->json(['message' => 'Reservation removed.']);
     }
 
     // ─── Show ─────────────────────────────────────────────────────────────────
@@ -153,8 +178,8 @@ class ReservationController extends Controller
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        if (!in_array($reservation->status, ['pending', 'approved'])) {
-            return response()->json(['message' => 'Only pending or approved reservations can be cancelled.'], 422);
+        if ($reservation->status !== 'pending') {
+            return response()->json(['message' => 'Only pending reservations can be cancelled.'], 422);
         }
 
         if ($reservation->payment && $reservation->payment->status === 'paid') {
@@ -199,14 +224,18 @@ class ReservationController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $reservation = Reservation::with(['user', 'facility'])->findOrFail($id);
+        $reservation = Reservation::with(['user', 'facility', 'payment'])->findOrFail($id);
 
         if ($reservation->status !== 'pending') {
             return response()->json(['message' => 'Only pending reservations can be approved.'], 422);
         }
 
+        if (!$reservation->payment || $reservation->payment->status !== 'paid') {
+            return response()->json(['message' => 'Payment must be completed before this reservation can be approved.'], 422);
+        }
+
         $reservation->update([
-            'status'      => 'approved',
+            'status'      => 'confirmed',
             'reviewed_by' => $request->user()->id,
             'reviewed_at' => now(),
         ]);
@@ -214,8 +243,8 @@ class ReservationController extends Controller
         NotificationService::notifyUser(
             $reservation->user,
             'reservation_approved',
-            'Reservation Approved',
-            "Your reservation for {$reservation->facility->name} on {$reservation->reservation_date->format('M d, Y')} has been approved. Please acknowledge the terms and complete payment to confirm your booking.",
+            'Reservation Confirmed',
+            "Your reservation for {$reservation->facility->name} on {$reservation->reservation_date->format('M d, Y')} has been approved and is now confirmed. We'll see you then!",
             $reservation->id
         );
 
@@ -230,10 +259,14 @@ class ReservationController extends Controller
             'admin_note' => ['required', 'string'],
         ]);
 
-        $reservation = Reservation::with(['user', 'facility'])->findOrFail($id);
+        $reservation = Reservation::with(['user', 'facility', 'payment'])->findOrFail($id);
 
         if ($reservation->status !== 'pending') {
             return response()->json(['message' => 'Only pending reservations can be rejected.'], 422);
+        }
+
+        if ($reservation->payment && $reservation->payment->status === 'paid') {
+            return response()->json(['message' => 'Cannot reject a reservation with a completed payment. No refunds.'], 422);
         }
 
         $reservation->update([

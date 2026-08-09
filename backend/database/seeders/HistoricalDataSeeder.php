@@ -13,7 +13,9 @@ class HistoricalDataSeeder extends Seeder
 {
     public function run(): void
     {
-        $clients  = User::where('role', 'client')->orderBy('id')->get();
+        // Skip clients that already have historical data (keeps this seeder safe to re-run,
+        // e.g. after adding a fresh batch of clients).
+        $clients  = User::where('role', 'client')->whereDoesntHave('reservations')->orderBy('id')->get();
         $reviewer = User::whereIn('role', ['administrator', 'staff'])->orderBy('id')->first();
 
         // Use first 3 available facilities (Basketball Court A, Swimming Pool, Gymnasium)
@@ -90,11 +92,17 @@ class HistoricalDataSeeder extends Seeder
         $receiptCounter = 10001;
 
         foreach ($clients as $i => $client) {
+            // Cycle through the 15 template variations regardless of how many
+            // clients there are; date offsets below stay keyed on the raw $i
+            // so every client still lands on a distinct date (no fake double-bookings).
+            $idx  = $i % 15;
+            $type = $idx % 3 === 0 ? 'book' : 'reserve';
+
             // ── RESERVATION 1: Completed (3–9 months ago, paid) ─────────────────
-            $fac1      = $facilities[$facilityMap[$i][0]];
-            $daysAgo1  = 90 + ($i * 14);   // 90–286 days ago
+            $fac1      = $facilities[$facilityMap[$idx][0]];
+            $daysAgo1  = 90 + ($i * 14);   // grows per client — guarantees a unique date
             $date1     = Carbon::now()->subDays($daysAgo1)->toDateString();
-            [$s1, $e1] = $timeSlots[$i];
+            [$s1, $e1] = $timeSlots[$idx];
             $hours1    = Carbon::createFromTimeString($e1)->diffInHours(Carbon::createFromTimeString($s1));
             $amount1   = $hours1 * $fac1->price_per_hour;
             $created1  = Carbon::now()->subDays($daysAgo1 + 2);
@@ -103,12 +111,13 @@ class HistoricalDataSeeder extends Seeder
             $resId1 = DB::table('reservations')->insertGetId([
                 'user_id'                => $client->id,
                 'facility_id'            => $fac1->id,
-                'purpose'                => $purposes[$i],
-                'number_of_participants' => $participantCounts[$i],
+                'purpose'                => $purposes[$idx],
+                'number_of_participants' => $participantCounts[$idx],
                 'reservation_date'       => $date1,
                 'start_time'             => $s1,
                 'end_time'               => $e1,
                 'status'                 => 'completed',
+                'type'                   => $type,
                 'terms_acknowledged'     => 1,
                 'terms_acknowledged_at'  => $created1->copy()->addHours(1),
                 'reviewed_by'            => $reviewer?->id,
@@ -126,7 +135,7 @@ class HistoricalDataSeeder extends Seeder
                 'amount'                     => $amount1,
                 'currency'                   => 'PHP',
                 'status'                     => 'paid',
-                'payment_method'             => $paymentMethods[$i],
+                'payment_method'             => $paymentMethods[$idx],
                 'paymongo_payment_intent_id' => 'pi_test_' . Str::random(20),
                 'paymongo_payment_method_id' => 'pm_test_' . Str::random(20),
                 'receipt_number'             => $receiptNum1,
@@ -145,28 +154,29 @@ class HistoricalDataSeeder extends Seeder
             );
 
             // ── RESERVATION 2: Cancelled or Rejected (1–3 months ago) ───────────
-            $fac2      = $facilities[$facilityMap[$i][1]];
-            $daysAgo2  = 30 + ($i * 5);    // 30–100 days ago
+            $fac2      = $facilities[$facilityMap[$idx][1]];
+            $daysAgo2  = 30 + ($i * 5);    // grows per client — guarantees a unique date
             $date2     = Carbon::now()->subDays($daysAgo2)->toDateString();
-            [$s2, $e2] = $timeSlots[($i + 5) % 15];
-            $status2   = $i < 8 ? 'cancelled' : 'rejected';
+            [$s2, $e2] = $timeSlots[($idx + 5) % 15];
+            $status2   = $idx < 8 ? 'cancelled' : 'rejected';
             $created2  = Carbon::now()->subDays($daysAgo2 + 2);
             $updated2  = Carbon::now()->subDays($daysAgo2);
 
             $resId2 = DB::table('reservations')->insertGetId([
                 'user_id'                => $client->id,
                 'facility_id'            => $fac2->id,
-                'purpose'                => $purposes[($i + 7) % 15],
-                'number_of_participants' => $participantCounts[($i + 3) % 15],
+                'purpose'                => $purposes[($idx + 7) % 15],
+                'number_of_participants' => $participantCounts[($idx + 3) % 15],
                 'reservation_date'       => $date2,
                 'start_time'             => $s2,
                 'end_time'               => $e2,
                 'status'                 => $status2,
+                'type'                   => $type,
                 'terms_acknowledged'     => $status2 === 'rejected' ? 1 : 0,
                 'terms_acknowledged_at'  => $status2 === 'rejected' ? $created2->copy()->addHours(1) : null,
                 'reviewed_by'            => $status2 === 'rejected' ? $reviewer?->id : null,
                 'reviewed_at'            => $status2 === 'rejected' ? Carbon::now()->subDays($daysAgo2 - 1) : null,
-                'admin_note'             => $status2 === 'rejected' ? $rejectionNotes[$i % count($rejectionNotes)] : null,
+                'admin_note'             => $status2 === 'rejected' ? $rejectionNotes[$idx % count($rejectionNotes)] : null,
                 'selected_amenities'     => null,
                 'created_at'             => $created2,
                 'updated_at'             => $updated2,
@@ -176,30 +186,31 @@ class HistoricalDataSeeder extends Seeder
             $notifTitle2 = $status2 === 'cancelled' ? 'Reservation Cancelled' : 'Reservation Rejected';
             $notifMsg2   = $status2 === 'cancelled'
                 ? "Your reservation at {$fac2->name} on " . Carbon::parse($date2)->format('M d, Y') . " has been cancelled."
-                : "Your reservation at {$fac2->name} on " . Carbon::parse($date2)->format('M d, Y') . " was not approved. Reason: " . $rejectionNotes[$i % count($rejectionNotes)];
+                : "Your reservation at {$fac2->name} on " . Carbon::parse($date2)->format('M d, Y') . " was not approved. Reason: " . $rejectionNotes[$idx % count($rejectionNotes)];
 
             $this->insertNotification($client->id, $resId2, $notifType2, $notifTitle2, $notifMsg2, $updated2->copy(), true);
 
             // ── RESERVATION 3: Pending or Approved (upcoming) ───────────────────
-            $fac3        = $facilities[$facilityMap[$i][2]];
-            $futureDays  = 5 + ($i * 3);   // 5–47 days from now
+            $fac3        = $facilities[$facilityMap[$idx][2]];
+            $futureDays  = 5 + ($i * 3);   // grows per client — guarantees a unique date
             $date3       = Carbon::now()->addDays($futureDays)->toDateString();
-            [$s3, $e3]   = $timeSlots[($i + 10) % 15];
+            [$s3, $e3]   = $timeSlots[($idx + 10) % 15];
             $hours3      = Carbon::createFromTimeString($e3)->diffInHours(Carbon::createFromTimeString($s3));
             $amount3     = $hours3 * $fac3->price_per_hour;
-            $status3     = $i < 10 ? 'pending' : 'approved';
+            $status3     = $idx < 10 ? 'pending' : 'approved';
             $created3    = Carbon::now()->subDays(3);
             $updated3    = Carbon::now()->subDays(1);
 
             $resId3 = DB::table('reservations')->insertGetId([
                 'user_id'                => $client->id,
                 'facility_id'            => $fac3->id,
-                'purpose'                => $purposes[($i + 3) % 15],
-                'number_of_participants' => $participantCounts[($i + 7) % 15],
+                'purpose'                => $purposes[($idx + 3) % 15],
+                'number_of_participants' => $participantCounts[($idx + 7) % 15],
                 'reservation_date'       => $date3,
                 'start_time'             => $s3,
                 'end_time'               => $e3,
                 'status'                 => $status3,
+                'type'                   => $type,
                 'terms_acknowledged'     => 1,
                 'terms_acknowledged_at'  => $created3->copy()->addHours(1),
                 'reviewed_by'            => $status3 === 'approved' ? $reviewer?->id : null,

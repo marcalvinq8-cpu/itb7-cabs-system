@@ -46,7 +46,7 @@ export default function ReceiptPage() {
     <div className="p-6 max-w-2xl mx-auto">
       <button
         onClick={() => navigate('/reservations', { replace: true })}
-        className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-5 transition-colors"
+        className="flex items-center gap-1.5 text-sm text-[#1C2833] hover:text-gray-800 mb-5 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
@@ -57,7 +57,7 @@ export default function ReceiptPage() {
             <h1 className="text-2xl font-bold text-[#1C2833]">Official Receipt</h1>
           </div>
           {r.payment?.receipt_number && (
-            <p className="text-gray-400 text-sm mt-0.5 font-mono">{r.payment.receipt_number}</p>
+            <p className="text-[#1C2833] text-sm mt-0.5 font-mono">{r.payment.receipt_number}</p>
           )}
         </div>
         <Button variant="outline" onClick={downloadPdf}>
@@ -76,11 +76,11 @@ export default function ReceiptPage() {
           {/* Client */}
           {r.user && (
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Billed To</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-2">Billed To</h3>
               <p className="font-semibold text-gray-900">{r.user.full_name}</p>
-              <p className="text-sm text-gray-500">{r.user.email}</p>
+              <p className="text-sm text-[#1C2833]">{r.user.email}</p>
               {r.user.contact_number && (
-                <p className="text-sm text-gray-500">{r.user.contact_number}</p>
+                <p className="text-sm text-[#1C2833]">{r.user.contact_number}</p>
               )}
             </section>
           )}
@@ -89,7 +89,7 @@ export default function ReceiptPage() {
 
           {/* Booking */}
           <section>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Booking Details</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-3">Booking Details</h3>
             <dl className="space-y-2 text-sm">
               {[
                 ['Reservation ID', `#${r.id}`],
@@ -102,7 +102,7 @@ export default function ReceiptPage() {
                 ['Purpose',        r.purpose],
               ].map(([label, value]) => (
                 <div key={label} className="flex gap-3">
-                  <dt className="text-gray-400 w-36 shrink-0">{label}</dt>
+                  <dt className="text-[#1C2833] w-36 shrink-0">{label}</dt>
                   <dd className="text-gray-900 font-medium">{value ?? '—'}</dd>
                 </div>
               ))}
@@ -114,7 +114,7 @@ export default function ReceiptPage() {
           {/* Payment */}
           {r.payment && (
             <section>
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Payment Details</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-[#1C2833] mb-3">Payment Details</h3>
               <dl className="space-y-2 text-sm">
                 {[
                   ['Method',    r.payment.payment_method ?? '—'],
@@ -123,7 +123,7 @@ export default function ReceiptPage() {
                   ['Receipt #', r.payment.receipt_number ?? '—'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex gap-3">
-                    <dt className="text-gray-400 w-36 shrink-0">{label}</dt>
+                    <dt className="text-[#1C2833] w-36 shrink-0">{label}</dt>
                     <dd className="text-gray-900 font-medium">{value}</dd>
                   </div>
                 ))}
@@ -138,7 +138,7 @@ export default function ReceiptPage() {
             </section>
           )}
 
-          <p className="text-center text-xs text-gray-400 pt-2 border-t border-gray-100">
+          <p className="text-center text-xs text-[#1C2833] pt-2 border-t border-gray-100">
             Thank you for booking with CABS. Please keep this receipt for your records.
           </p>
         </CardContent>

@@ -80,7 +80,7 @@ export default function Login() {
               {[['Fast', 'Instant booking'], ['Secure', 'Safe payments'], ['Easy', 'Simple process']].map(([title, sub]) => (
                 <div key={title} className="bg-white rounded-xl p-3 border border-[#FADBD8] shadow-sm">
                   <p className="text-[#C0392B] font-bold text-xs">{title}</p>
-                  <p className="text-[#717D7E] text-[10px] mt-0.5">{sub}</p>
+                  <p className="text-[#1C2833] text-[10px] mt-0.5">{sub}</p>
                 </div>
               ))}
             </div>
@@ -100,7 +100,7 @@ export default function Login() {
             </div>
 
             <h2 className="text-2xl font-bold text-[#1C2833] mb-1">Welcome back</h2>
-            <p className="text-[#717D7E] text-sm mb-7">Sign in to your CABS account</p>
+            <p className="text-[#1C2833] text-sm mb-7">Sign in to your CABS account</p>
 
             {apiError && (
               <Alert variant="error" className="mb-5">{apiError}</Alert>
@@ -138,7 +138,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPass(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#717D7E] hover:text-[#1C2833]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2833] hover:text-[#1C2833]"
                     tabIndex={-1}
                   >
                     {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -163,14 +163,14 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-[#717D7E]">
+            <p className="mt-6 text-center text-sm text-[#1C2833]">
               Don&apos;t have an account?{' '}
               <Link to="/register" className="font-semibold text-[#C0392B] hover:text-[#96281B]">
                 Create one
               </Link>
             </p>
 
-            <p className="text-center text-xs text-[#717D7E]/60 mt-6">
+            <p className="text-center text-xs text-[#1C2833]/60 mt-6">
               © {new Date().getFullYear()} Cabuyao Athletes Basic School
             </p>
           </div>

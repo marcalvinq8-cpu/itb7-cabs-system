@@ -93,7 +93,7 @@ export default function CalendarPage({ adminView = false }) {
           <h1 className="text-2xl font-bold text-[#1C2833]">
             {adminView ? 'Reservations Calendar' : 'My Calendar'}
           </h1>
-          <p className="text-[#717D7E] text-sm mt-0.5">
+          <p className="text-[#1C2833] text-sm mt-0.5">
             {adminView ? 'View and manage all bookings on the calendar' : 'Track your upcoming reservations'}
           </p>
         </div>
@@ -131,7 +131,7 @@ export default function CalendarPage({ adminView = false }) {
                 <Icon className="h-5 w-5" />
               </div>
               <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#717D7E] mt-0.5">{label}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
             </CardContent>
           </Card>
         ))}
@@ -146,7 +146,7 @@ export default function CalendarPage({ adminView = false }) {
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-colors ${
               selectedStatus === l.label.toLowerCase()
                 ? 'text-white border-transparent'
-                : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:border-gray-300'
+                : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:border-gray-300'
             }`}
             style={selectedStatus === l.label.toLowerCase() ? { backgroundColor: l.color, borderColor: l.color } : {}}
           >
@@ -158,7 +158,7 @@ export default function CalendarPage({ adminView = false }) {
         {selectedStatus !== 'all' && (
           <button
             onClick={() => setSelectedStatus('all')}
-            className="px-3 py-1.5 rounded-full border border-[#E5E7E9] bg-white text-xs text-[#717D7E] hover:bg-gray-50"
+            className="px-3 py-1.5 rounded-full border border-[#E5E7E9] bg-white text-xs text-[#1C2833] hover:bg-gray-50"
           >
             Clear filter
           </button>
@@ -171,7 +171,7 @@ export default function CalendarPage({ adminView = false }) {
           <p className="text-sm font-semibold text-[#1C2833]">
             {adminView ? 'All Reservations' : 'My Bookings'}
           </p>
-          <p className="text-xs text-[#717D7E]">
+          <p className="text-xs text-[#1C2833]">
             Last updated: {lastUpdated.toLocaleTimeString()}
             {isFetching && <span className="ml-1 text-[#C0392B]">· Refreshing…</span>}
           </p>

@@ -18,7 +18,7 @@ const TYPE_META = {
   PAYMENT_SUCCESS:        { icon: CreditCard,    color: 'text-[#1E8449] bg-[#EAFAF1]' },
   payment_success:        { icon: CreditCard,    color: 'text-[#1E8449] bg-[#EAFAF1]' },
   PAYMENT_FAILED:         { icon: AlertCircle,   color: 'text-[#C0392B] bg-[#FADBD8]' },
-  RESERVATION_CANCELLED:  { icon: Ban,           color: 'text-[#717D7E] bg-[#F2F3F4]' },
+  RESERVATION_CANCELLED:  { icon: Ban,           color: 'text-[#1C2833] bg-[#F2F3F4]' },
   UPCOMING_REMINDER:      { icon: Clock,         color: 'text-[#2980B9] bg-[#D6EAF8]' },
   MAINTENANCE_ALERT:      { icon: Wrench,        color: 'text-[#B7950B] bg-[#FEF9E7]' },
   ADMIN_NEW_RESERVATION:  { icon: Bell,          color: 'text-[#C0392B] bg-[#FADBD8]' },
@@ -82,7 +82,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div className="border-l-4 border-[#C0392B] pl-4">
           <h1 className="text-2xl font-bold text-[#1C2833]">Notifications</h1>
-          <p className="text-[#717D7E] text-sm">{unreadCount} unread</p>
+          <p className="text-[#1C2833] text-sm">{unreadCount} unread</p>
         </div>
         {unreadCount > 0 && (
           <Button variant="outline" size="sm" onClick={markAllRead}>
@@ -97,7 +97,7 @@ export default function NotificationsPage() {
             className={cn('px-3 py-1 rounded-full text-xs font-medium border transition-colors capitalize',
               filter === f
                 ? 'bg-[#C0392B] text-white border-[#C0392B]'
-                : 'bg-white text-[#717D7E] border-[#E5E7E9] hover:bg-[#FADBD8]/30')}>
+                : 'bg-white text-[#1C2833] border-[#E5E7E9] hover:bg-[#FADBD8]/30')}>
             {f}
           </button>
         ))}
@@ -107,13 +107,13 @@ export default function NotificationsPage() {
         <Card>
           <CardContent className="text-center py-16">
             <Bell className="h-12 w-12 text-[#E5E7E9] mx-auto mb-3" />
-            <p className="text-[#717D7E] font-medium">No notifications found</p>
+            <p className="text-[#1C2833] font-medium">No notifications found</p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-2">
           {paginated.map(n => {
-            const meta = TYPE_META[n.type] ?? { icon: Bell, color: 'text-[#717D7E] bg-[#F2F3F4]' }
+            const meta = TYPE_META[n.type] ?? { icon: Bell, color: 'text-[#1C2833] bg-[#F2F3F4]' }
             const Icon = meta.icon
             return (
               <Card key={n.id} onClick={() => handleClick(n)}
@@ -125,12 +125,12 @@ export default function NotificationsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={cn('text-sm text-[#1C2833]', !n.read_at && 'font-semibold')}>{n.title}</p>
-                    <p className="text-xs text-[#717D7E] mt-0.5 line-clamp-2">{n.message}</p>
-                    <p className="text-[10px] text-[#717D7E] mt-1">
+                    <p className="text-xs text-[#1C2833] mt-0.5 line-clamp-2">{n.message}</p>
+                    <p className="text-[10px] text-[#1C2833] mt-1">
                       {n.created_at ? format(parseISO(n.created_at), 'MMM d, yyyy · h:mm a') : '—'}
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-[#717D7E] flex-shrink-0 mt-1" />
+                  <ChevronRight className="h-4 w-4 text-[#1C2833] flex-shrink-0 mt-1" />
                 </CardContent>
               </Card>
             )
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Prev</Button>
-          <span className="text-sm text-[#717D7E]">{page} / {totalPages}</span>
+          <span className="text-sm text-[#1C2833]">{page} / {totalPages}</span>
           <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
         </div>
       )}

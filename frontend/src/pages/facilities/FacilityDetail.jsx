@@ -113,20 +113,20 @@ export default function FacilityDetail() {
             <CardContent className="space-y-4 pt-4">
               {facility.location && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <MapPin className="h-4 w-4 text-gray-400 shrink-0" />
+                  <MapPin className="h-4 w-4 text-[#1C2833] shrink-0" />
                   {facility.location}
                 </div>
               )}
 
               {facility.capacity && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <Users className="h-4 w-4 text-gray-400 shrink-0" />
+                  <Users className="h-4 w-4 text-[#1C2833] shrink-0" />
                   Capacity: {facility.capacity} persons
                 </div>
               )}
 
               <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Clock className="h-4 w-4 text-gray-400 shrink-0" />
+                <Clock className="h-4 w-4 text-[#1C2833] shrink-0" />
                 ₱{Number(facility.price_per_hour).toLocaleString()} / hour
               </div>
 
@@ -153,7 +153,7 @@ export default function FacilityDetail() {
                     <li key={a.id} className="flex items-center justify-between text-sm py-1">
                       <span className="text-gray-700">{a.name}</span>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">×{a.quantity}</span>
+                        <span className="text-xs text-[#1C2833]">×{a.quantity}</span>
                         {!a.is_available && (
                           <span className="text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">Unavailable</span>
                         )}
@@ -171,7 +171,7 @@ export default function FacilityDetail() {
           <Card>
             <CardHeader>
               <CardTitle>Availability Calendar</CardTitle>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-[#1C2833] mt-1">
                 Colored blocks show booked slots. Days without blocks are open for reservation.
               </p>
             </CardHeader>

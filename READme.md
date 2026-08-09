@@ -10,6 +10,15 @@ ITB-7-capstone/
 └─ frontend/   React + Vite app (default port 5173)
 ```
 
+## How a reservation works
+
+When a client requests a facility they choose one of two types:
+
+- **Reserve** — submit the request, pay, then wait for staff/admin approval. Payment must be completed before staff can approve it (approving an unpaid request is blocked).
+- **Book** — pay immediately for instant confirmation, no approval step. If the client closes the payment dialog before paying, the booking attempt is discarded rather than left sitting unpaid.
+
+Either way, payment always comes before the reservation is confirmed — a client can't get an approved/confirmed booking without having paid first.
+
 ## Prerequisites
 
 Install these on the new machine before cloning:
@@ -94,7 +103,7 @@ Visit **http://localhost:5173** in your browser.
 | Staff         | staff@cabs.edu.ph      | Staff@1234   |
 | Client        | juan@example.com       | Client@1234  |
 
-`ClientSeeder` also creates 14 additional demo client accounts (maria@, pedro@, ana@, carlo@, sofia@, mark@, jasmine@, ryan@, camille@, lester@, alyssa@, dennis@, kristine@, miguel@ — all `@example.com`, password `Client@1234`), and `HistoricalDataSeeder` fills in realistic historical reservations/payments/notifications for them automatically. `php artisan migrate --seed` reproduces this full demo dataset on any machine — no separate database export or image folder is needed to share the project.
+`ClientSeeder` also creates 14 additional named demo client accounts (maria@, pedro@, ana@, carlo@, sofia@, mark@, jasmine@, ryan@, camille@, lester@, alyssa@, dennis@, kristine@, miguel@ — all `@example.com`, password `Client@1234`), and `MassClientSeeder` adds 100 more randomized ones (`client1@example.com` … `client100@example.com`, same password) so admin views and analytics have realistic volume. `HistoricalDataSeeder` then fills in realistic historical reservations/payments/notifications (a mix of Reserve and Book, across pending/approved/confirmed/completed/rejected/cancelled) for every client automatically — it's safe to re-run on its own since it skips clients that already have reservations. `php artisan migrate --seed` reproduces this full demo dataset (115 clients total) on any machine — no separate database export or image folder is needed to share the project.
 
 ## Troubleshooting
 

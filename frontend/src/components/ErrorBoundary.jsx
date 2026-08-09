@@ -25,7 +25,7 @@ export default class ErrorBoundary extends Component {
             <AlertTriangle className="h-8 w-8 text-[#C0392B]" />
           </div>
           <h1 className="text-xl font-bold text-[#1C2833] mb-2">Something went wrong</h1>
-          <p className="text-sm text-[#717D7E] mb-6">
+          <p className="text-sm text-[#1C2833] mb-6">
             An unexpected error occurred. You can try refreshing the page or go back to the dashboard.
           </p>
           {import.meta.env.DEV && (

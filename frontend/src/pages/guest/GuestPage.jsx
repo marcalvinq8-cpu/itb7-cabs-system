@@ -65,7 +65,7 @@ export default function GuestPage() {
             <img src="/cabuyao-icon.png" alt="CABS" className="w-8 h-8 object-contain" />
             <div className="leading-tight">
               <p className="font-black text-[#C0392B] text-sm leading-none">CABS</p>
-              <p className="text-[10px] text-[#717D7E] leading-none">Reservation System</p>
+              <p className="text-[10px] text-[#1C2833] leading-none">Reservation System</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -133,7 +133,7 @@ export default function GuestPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-[#1C2833]">How It Works</h2>
-            <p className="text-[#717D7E] text-sm mt-2">Get started in three simple steps</p>
+            <p className="text-[#1C2833] text-sm mt-2">Get started in three simple steps</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {STEPS.map(({ icon: Icon, step, title, desc }) => (
@@ -143,7 +143,7 @@ export default function GuestPage() {
                   <span className="absolute -top-2 -right-2 w-6 h-6 bg-white border-2 border-[#C0392B] rounded-full flex items-center justify-center text-[10px] font-black text-[#C0392B]">{step}</span>
                 </div>
                 <h3 className="font-bold text-[#1C2833] mb-2">{title}</h3>
-                <p className="text-[#717D7E] text-sm leading-relaxed">{desc}</p>
+                <p className="text-[#1C2833] text-sm leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -156,7 +156,7 @@ export default function GuestPage() {
           <div className="flex items-end justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-[#1C2833]">Our Facilities</h2>
-              <p className="text-[#717D7E] text-sm mt-1">Browse all available sports facilities</p>
+              <p className="text-[#1C2833] text-sm mt-1">Browse all available sports facilities</p>
             </div>
             <Link to="/register" className="text-sm text-[#C0392B] font-semibold hover:underline flex items-center gap-1">
               Register to book <ArrowRight className="h-3.5 w-3.5" />
@@ -170,7 +170,7 @@ export default function GuestPage() {
               ))}
             </div>
           ) : facilities.length === 0 ? (
-            <div className="text-center py-16 text-[#717D7E]">No facilities available at the moment.</div>
+            <div className="text-center py-16 text-[#1C2833]">No facilities available at the moment.</div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {facilities.map(facility => (
@@ -193,12 +193,12 @@ export default function GuestPage() {
                     <h3 className="font-bold text-[#1C2833] mb-1">{facility.name}</h3>
 
                     {facility.location && (
-                      <p className="text-xs text-[#717D7E] flex items-center gap-1 mb-2">
+                      <p className="text-xs text-[#1C2833] flex items-center gap-1 mb-2">
                         <MapPin className="h-3 w-3 text-[#C0392B]" /> {facility.location}
                       </p>
                     )}
 
-                    <div className="flex items-center gap-4 text-xs text-[#717D7E] mb-3">
+                    <div className="flex items-center gap-4 text-xs text-[#1C2833] mb-3">
                       {facility.capacity && (
                         <span className="flex items-center gap-1">
                           <Users className="h-3 w-3" /> {facility.capacity} max
@@ -212,10 +212,10 @@ export default function GuestPage() {
                     {facility.amenities?.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
                         {facility.amenities.slice(0, 3).map(a => (
-                          <span key={a.id} className="text-[10px] bg-[#F2F3F4] text-[#717D7E] px-2 py-0.5 rounded-full">{a.name}</span>
+                          <span key={a.id} className="text-[10px] bg-[#F2F3F4] text-[#1C2833] px-2 py-0.5 rounded-full">{a.name}</span>
                         ))}
                         {facility.amenities.length > 3 && (
-                          <span className="text-[10px] text-[#717D7E] py-0.5">+{facility.amenities.length - 3} more</span>
+                          <span className="text-[10px] text-[#1C2833] py-0.5">+{facility.amenities.length - 3} more</span>
                         )}
                       </div>
                     )}
@@ -240,7 +240,7 @@ export default function GuestPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-2xl font-bold text-[#1C2833]">Facility Schedules</h2>
-            <p className="text-[#717D7E] text-sm mt-2">
+            <p className="text-[#1C2833] text-sm mt-2">
               Check when facilities are open. Register to see real-time availability and book your slot.
             </p>
           </div>
@@ -257,9 +257,9 @@ export default function GuestPage() {
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="bg-[#F2F3F4] border-b border-[#E5E7E9]">
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-[#717D7E]">Facility</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-[#1C2833]">Facility</th>
                     {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
-                      <th key={d} className="px-3 py-3 text-center text-xs font-semibold text-[#717D7E]">{d}</th>
+                      <th key={d} className="px-3 py-3 text-center text-xs font-semibold text-[#1C2833]">{d}</th>
                     ))}
                   </tr>
                 </thead>
@@ -268,7 +268,7 @@ export default function GuestPage() {
                     <tr key={f.id} className="hover:bg-[#FADBD8]/10 transition-colors">
                       <td className="px-5 py-3">
                         <p className="font-medium text-[#1C2833] text-xs">{f.name}</p>
-                        {f.location && <p className="text-[10px] text-[#717D7E]">{f.location}</p>}
+                        {f.location && <p className="text-[10px] text-[#1C2833]">{f.location}</p>}
                       </td>
                       {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
                         <td key={d} className="px-3 py-3 text-center">
@@ -284,7 +284,7 @@ export default function GuestPage() {
                     </tr>
                   ))}
                   {facilities.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-8 text-[#717D7E] text-sm">No facilities available</td></tr>
+                    <tr><td colSpan={8} className="text-center py-8 text-[#1C2833] text-sm">No facilities available</td></tr>
                   )}
                 </tbody>
               </table>
@@ -294,13 +294,13 @@ export default function GuestPage() {
             <div className="px-6 py-4 border-t border-[#E5E7E9] bg-[#FADBD8]/20 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#27AE60]" /><span className="text-xs text-[#717D7E]">Available</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#27AE60]" /><span className="text-xs text-[#1C2833]">Available</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#F39C12]" /><span className="text-xs text-[#717D7E]">Maintenance</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F39C12]" /><span className="text-xs text-[#1C2833]">Maintenance</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#E5E7E9]" /><span className="text-xs text-[#717D7E]">Unavailable</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#E5E7E9]" /><span className="text-xs text-[#1C2833]">Unavailable</span>
                 </div>
               </div>
               <Link to="/register"
@@ -317,7 +317,7 @@ export default function GuestPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-2xl font-bold text-[#1C2833]">Everything You Need</h2>
-            <p className="text-[#717D7E] text-sm mt-2">A complete facility management and reservation platform</p>
+            <p className="text-[#1C2833] text-sm mt-2">A complete facility management and reservation platform</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
@@ -326,7 +326,7 @@ export default function GuestPage() {
                   <Icon className="h-5 w-5 text-[#C0392B]" />
                 </div>
                 <h3 className="font-bold text-[#1C2833] text-sm mb-1">{title}</h3>
-                <p className="text-[#717D7E] text-xs leading-relaxed">{desc}</p>
+                <p className="text-[#1C2833] text-xs leading-relaxed">{desc}</p>
               </div>
             ))}
           </div>
@@ -377,13 +377,13 @@ export default function GuestPage() {
             <img src="/cabuyao-icon.png" alt="CABS" className="w-7 h-7 object-contain" />
             <div>
               <p className="font-bold text-[#C0392B] text-sm">CABS</p>
-              <p className="text-[10px] text-[#717D7E]">Cabuyao Athletes Basic School</p>
+              <p className="text-[10px] text-[#1C2833]">Cabuyao Athletes Basic School</p>
             </div>
           </div>
-          <p className="text-xs text-[#717D7E]">
+          <p className="text-xs text-[#1C2833]">
             © {new Date().getFullYear()} Cabuyao Athletes Basic School. All rights reserved.
           </p>
-          <div className="flex items-center gap-4 text-xs text-[#717D7E]">
+          <div className="flex items-center gap-4 text-xs text-[#1C2833]">
             <Link to="/login" className="hover:text-[#C0392B] transition-colors">Sign In</Link>
             <Link to="/register" className="hover:text-[#C0392B] transition-colors">Register</Link>
           </div>
