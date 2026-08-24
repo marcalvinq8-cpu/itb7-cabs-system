@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Building2, Calendar, ClipboardList, CreditCard,
+  LayoutDashboard, Landmark, Calendar, ClipboardList, CreditCard,
   LogOut, Users, BarChart3,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = {
   client: [
     { to: '/dashboard',    label: 'Dashboard',       icon: LayoutDashboard },
-    { to: '/facilities',   label: 'Facilities',      icon: Building2 },
+    { to: '/facilities',   label: 'Facilities',      icon: Landmark },
     { to: '/calendar',     label: 'Calendar',        icon: Calendar },
     { to: '/reservations', label: 'My Reservations', icon: ClipboardList },
   ],
@@ -19,12 +19,12 @@ const NAV_ITEMS = {
     { to: '/staff/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
     { to: '/staff/reservations', label: 'Reservations', icon: ClipboardList },
     { to: '/staff/calendar',     label: 'Calendar',     icon: Calendar },
-    { to: '/staff/facilities',   label: 'Facilities',   icon: Building2 },
+    { to: '/staff/facilities',   label: 'Facilities',   icon: Landmark },
   ],
   administrator: [
     { to: '/admin/dashboard',    label: 'Dashboard',       icon: LayoutDashboard },
     { to: '/admin/reservations', label: 'Reservations',    icon: ClipboardList },
-    { to: '/admin/facilities',   label: 'Facilities',      icon: Building2 },
+    { to: '/admin/facilities',   label: 'Facilities',      icon: Landmark },
     { to: '/admin/calendar',     label: 'Calendar',        icon: Calendar },
     { to: '/admin/users',        label: 'User Management', icon: Users },
     { to: '/admin/payments',     label: 'Payments',        icon: CreditCard },

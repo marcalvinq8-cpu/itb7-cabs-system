@@ -21,7 +21,22 @@ class UserController extends Controller
             })
             ->orderByDesc('created_at');
 
-        return response()->json($query->paginate(25));
+        $paginated = $query->paginate(25);
+
+        // Role breakdown for the stat cards — always reflects the whole table,
+        // independent of the current page/filter/search, so it doesn't collapse
+        // to whatever roles happen to appear on the current page.
+        $counts = [
+            'total'          => User::count(),
+            'clients'        => User::where('role', 'client')->count(),
+            'staff'          => User::where('role', 'staff')->count(),
+            'administrators' => User::where('role', 'administrator')->count(),
+        ];
+
+        return response()->json([
+            ...$paginated->toArray(),
+            'counts' => $counts,
+        ]);
     }
 
     public function store(Request $request)

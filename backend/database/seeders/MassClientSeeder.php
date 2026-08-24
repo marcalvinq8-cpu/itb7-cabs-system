@@ -22,7 +22,11 @@ class MassClientSeeder extends Seeder
             'San Isidro', 'Barangay Uno',
         ];
 
-        $count = 100;
+        $count = 1000;
+
+        // Hashing is deliberately slow (bcrypt) — every seeded account shares the same
+        // demo password, so hash it once instead of re-hashing per row.
+        $password = Hash::make('Client@1234');
 
         for ($i = 1; $i <= $count; $i++) {
             $name  = fake()->unique()->name();
@@ -30,7 +34,7 @@ class MassClientSeeder extends Seeder
 
             User::firstOrCreate(['email' => $email], [
                 'full_name'      => $name,
-                'password'       => Hash::make('Client@1234'),
+                'password'       => $password,
                 'age'            => fake()->numberBetween(18, 55),
                 'gender'         => fake()->randomElement(['male', 'female']),
                 'address'        => 'Brgy. ' . fake()->randomElement($barangays) . ', Cabuyao, Laguna',

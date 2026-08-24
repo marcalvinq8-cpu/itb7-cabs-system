@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Plus, Pencil, Wrench, Trash2, MapPin, Users, Upload, X, Building2, CheckCircle2, AlertTriangle, Ban, Lock, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react'
@@ -45,8 +45,12 @@ function getSportTheme(name = '') {
 
 function FacilityRow({ facility, onEdit, onMaint, onClose, onReopen, onDelete }) {
   const theme = getSportTheme(facility.name)
+  const navigate = useNavigate()
   return (
-    <tr className="border-b border-[#E5E7E9] hover:bg-[#FADBD8]/20 transition-colors">
+    <tr
+      onClick={() => navigate(`/facilities/${facility.id}`)}
+      className="border-b border-[#E5E7E9] hover:bg-[#FADBD8]/20 cursor-pointer transition-colors"
+    >
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
@@ -87,11 +91,8 @@ function FacilityRow({ facility, onEdit, onMaint, onClose, onReopen, onDelete })
       <td className="px-4 py-3 text-center">
         <Badge status={facility.status} />
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-1">
-          <Link to={`/facilities/${facility.id}`}>
-            <Button variant="outline" size="sm">View</Button>
-          </Link>
           <Button variant="ghost" size="sm" onClick={() => onEdit(facility)} title="Edit">
             <Pencil className="h-3.5 w-3.5" />
           </Button>

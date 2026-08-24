@@ -100,7 +100,10 @@ class HistoricalDataSeeder extends Seeder
 
             // ── RESERVATION 1: Completed (3–9 months ago, paid) ─────────────────
             $fac1      = $facilities[$facilityMap[$idx][0]];
-            $daysAgo1  = 90 + ($i * 14);   // grows per client — guarantees a unique date
+            // Spread offsets across clients but wrap with modulo so, even with 1000+
+            // clients, dates stay within a realistic ~2-year window instead of drifting
+            // decades into the past/future.
+            $daysAgo1  = 90 + (($i * 14) % 700);
             $date1     = Carbon::now()->subDays($daysAgo1)->toDateString();
             [$s1, $e1] = $timeSlots[$idx];
             $hours1    = Carbon::createFromTimeString($e1)->diffInHours(Carbon::createFromTimeString($s1));
@@ -155,7 +158,7 @@ class HistoricalDataSeeder extends Seeder
 
             // ── RESERVATION 2: Cancelled or Rejected (1–3 months ago) ───────────
             $fac2      = $facilities[$facilityMap[$idx][1]];
-            $daysAgo2  = 30 + ($i * 5);    // grows per client — guarantees a unique date
+            $daysAgo2  = 30 + (($i * 5) % 300);
             $date2     = Carbon::now()->subDays($daysAgo2)->toDateString();
             [$s2, $e2] = $timeSlots[($idx + 5) % 15];
             $status2   = $idx < 8 ? 'cancelled' : 'rejected';
@@ -192,7 +195,7 @@ class HistoricalDataSeeder extends Seeder
 
             // ── RESERVATION 3: Pending or Approved (upcoming) ───────────────────
             $fac3        = $facilities[$facilityMap[$idx][2]];
-            $futureDays  = 5 + ($i * 3);   // grows per client — guarantees a unique date
+            $futureDays  = 5 + (($i * 3) % 180);
             $date3       = Carbon::now()->addDays($futureDays)->toDateString();
             [$s3, $e3]   = $timeSlots[($idx + 10) % 15];
             $hours3      = Carbon::createFromTimeString($e3)->diffInHours(Carbon::createFromTimeString($s3));

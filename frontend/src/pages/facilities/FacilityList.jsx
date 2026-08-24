@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MapPin, Users, Clock, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/api/axios'
@@ -226,10 +226,14 @@ export default function FacilityList() {
 function FacilityCard({ facility }) {
   const available = facility.status === 'available'
   const [showModal, setShowModal] = useState(false)
+  const navigate = useNavigate()
 
   return (
     <>
-    <Card className="flex flex-col overflow-hidden group">
+    <Card
+      className="flex flex-col overflow-hidden group cursor-pointer hover:shadow-md transition-shadow"
+      onClick={() => navigate(`/facilities/${facility.id}`)}
+    >
       <div className="h-44 relative overflow-hidden">
         {facility.image_url ? (
           <img
@@ -284,14 +288,17 @@ function FacilityCard({ facility }) {
           </div>
         )}
 
-        <div className="mt-auto pt-2 flex gap-2">
-          <Link to={`/facilities/${facility.id}`} className="flex-1">
-            <Button variant="outline" className="w-full" size="sm">View Details</Button>
-          </Link>
-          {available && (
-            <Button className="w-full flex-1" size="sm" onClick={() => setShowModal(true)}>Reserve</Button>
-          )}
-        </div>
+        {available && (
+          <div className="mt-auto pt-2">
+            <Button
+              className="w-full"
+              size="sm"
+              onClick={e => { e.stopPropagation(); setShowModal(true) }}
+            >
+              Reserve
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
     {showModal && (

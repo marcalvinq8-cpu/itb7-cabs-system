@@ -132,17 +132,23 @@ export default function AdminUsers() {
   const changeRole   = val => { setRole(val);   setPage(1) }
 
   const rows     = data?.data         ?? []
-  const searchSuggestions = useMemo(() => [
-    ...rows.map(u => u.full_name),
-    ...rows.map(u => u.email),
-  ], [rows])
+  const searchSuggestions = useMemo(() => rows.map(u => ({
+    id:               u.id,
+    label:            u.full_name,
+    sublabel:         u.email,
+    avatarText:       initials(u.full_name),
+    avatarColorClass: avatarColor(u.full_name),
+  })), [rows])
   const lastPage = data?.last_page    ?? 1
   const curPage  = data?.current_page ?? 1
   const total    = data?.total        ?? 0
 
-  const clientCount = rows.filter(u => u.role === 'client').length
-  const staffCount  = rows.filter(u => u.role === 'staff').length
-  const adminCount  = rows.filter(u => u.role === 'administrator').length
+  // Counts come from the backend (data.counts) so they reflect the whole
+  // table, not just whichever roles happen to appear on the current page.
+  const totalCount  = data?.counts?.total          ?? 0
+  const clientCount = data?.counts?.clients        ?? 0
+  const staffCount  = data?.counts?.staff          ?? 0
+  const adminCount  = data?.counts?.administrators ?? 0
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -161,7 +167,7 @@ export default function AdminUsers() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Users',     value: total,        icon: Users,       color: 'text-[#1C2833] bg-[#F2F3F4]' },
+          { label: 'Total Users',     value: totalCount,   icon: Users,       color: 'text-[#1C2833] bg-[#F2F3F4]' },
           { label: 'Clients',         value: clientCount,  icon: UserCheck,   color: 'text-[#2980B9] bg-[#D6EAF8]' },
           { label: 'Staff',           value: staffCount,   icon: Briefcase,   color: 'text-[#E67E22] bg-[#FDEBD0]' },
           { label: 'Administrators',  value: adminCount,   icon: ShieldCheck, color: 'text-[#C0392B] bg-[#FADBD8]' },
@@ -281,22 +287,22 @@ export default function AdminUsers() {
             </div>
           )}
 
-          {/* Pagination */}
-          {lastPage > 1 && (
-            <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
-              <p className="text-sm text-[#1C2833]">
-                Page {curPage} of {lastPage} · <span className="font-medium text-[#1C2833]">{total}</span> users
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" disabled={curPage <= 1} onClick={() => setPage(p => p - 1)}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" disabled={curPage >= lastPage} onClick={() => setPage(p => p + 1)}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
+          {/* Pagination — always rendered (even for a single page) so the card's
+              footer stays put instead of appearing/disappearing as filters change
+              the result count. */}
+          <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
+            <p className="text-sm text-[#1C2833]">
+              Page {curPage} of {lastPage} · <span className="font-medium text-[#1C2833]">{total}</span> users
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={curPage <= 1} onClick={() => setPage(p => p - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" disabled={curPage >= lastPage} onClick={() => setPage(p => p + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 

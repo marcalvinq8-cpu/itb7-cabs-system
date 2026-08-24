@@ -4,8 +4,13 @@ import { Search } from 'lucide-react'
 /**
  * A plain text input that shows a type-ahead dropdown of matching
  * suggestions as the user types. Suggestions are derived client-side from
- * whatever list of candidate strings the caller passes in — no extra
- * network requests.
+ * whatever list of candidates the caller passes in — no extra network
+ * requests.
+ *
+ * Each entry in `suggestions` can be either a plain string (rendered as a
+ * simple text row, the original behavior) or an object
+ * `{ id?, label, sublabel?, avatarText?, avatarColorClass? }` for a richer
+ * "person" style row — avatar initials + name + a secondary line (e.g. email).
  */
 export default function SearchAutocomplete({
   value,
@@ -20,27 +25,35 @@ export default function SearchAutocomplete({
   const [focused, setFocused] = useState(false)
   const [highlighted, setHighlighted] = useState(-1)
 
+  const normalized = useMemo(() => suggestions
+    .map((s, i) => (typeof s === 'string' ? { id: i, label: s } : s))
+    .filter(item => item?.label),
+    [suggestions])
+
   const matches = useMemo(() => {
     const q = value.trim().toLowerCase()
     if (!q) return []
     const seen = new Set()
     const out = []
-    for (const raw of suggestions) {
-      if (!raw) continue
-      const s = String(raw)
-      const lower = s.toLowerCase()
-      if (lower === q || seen.has(lower) || !lower.includes(q)) continue
-      seen.add(lower)
-      out.push(s)
+    for (const item of normalized) {
+      const label = String(item.label)
+      const lower = label.toLowerCase()
+      const subLower = item.sublabel ? String(item.sublabel).toLowerCase() : ''
+      const isMatch = lower.includes(q) || subLower.includes(q)
+      if (!isMatch || lower === q) continue
+      const key = item.id ?? lower
+      if (seen.has(key)) continue
+      seen.add(key)
+      out.push(item)
       if (out.length >= maxSuggestions) break
     }
     return out
-  }, [value, suggestions, maxSuggestions])
+  }, [value, normalized, maxSuggestions])
 
   const showDropdown = focused && matches.length > 0
 
-  const select = s => {
-    onChange(s)
+  const select = item => {
+    onChange(item.label)
     setFocused(false)
     setHighlighted(-1)
   }
@@ -80,18 +93,28 @@ export default function SearchAutocomplete({
         aria-autocomplete="list"
       />
       {showDropdown && (
-        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-[#E5E7E9] rounded-lg shadow-lg max-h-60 overflow-y-auto text-sm">
-          {matches.map((s, i) => (
+        <div className="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-[#E5E7E9] rounded-lg shadow-lg max-h-72 overflow-y-auto text-sm">
+          {matches.map((item, i) => (
             <button
-              key={s}
+              key={item.id ?? item.label}
               type="button"
-              onMouseDown={e => { e.preventDefault(); select(s) }}
+              onMouseDown={e => { e.preventDefault(); select(item) }}
               onMouseEnter={() => setHighlighted(i)}
-              className={`w-full text-left px-3 py-2 truncate transition-colors cursor-pointer ${
+              className={`w-full flex items-center gap-2.5 text-left px-3 py-2 transition-colors cursor-pointer ${
                 i === highlighted ? 'bg-[#FADBD8]/40 text-[#96281B]' : 'text-[#1C2833] hover:bg-[#FADBD8]/20'
               }`}
             >
-              {s}
+              {item.avatarText && (
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-white ${item.avatarColorClass || 'bg-[#C0392B]'}`}>
+                  {item.avatarText}
+                </span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{item.label}</span>
+                {item.sublabel && (
+                  <span className="block text-xs text-[#717D7E] truncate">{item.sublabel}</span>
+                )}
+              </span>
             </button>
           ))}
         </div>

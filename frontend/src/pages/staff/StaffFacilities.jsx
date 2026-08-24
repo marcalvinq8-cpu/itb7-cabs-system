@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { MapPin, Users, Building2, CheckCircle2, AlertTriangle, Ban, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/api/axios'
 import Badge from '@/components/ui/Badge'
-import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
 
@@ -36,6 +35,7 @@ export default function StaffFacilities() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [search, setSearch]             = useState('')
   const [page, setPage]                 = useState(1)
+  const navigate                        = useNavigate()
 
   const { data: facilities = [], isLoading } = useQuery({
     queryKey: ['facilities'],
@@ -158,14 +158,17 @@ export default function StaffFacilities() {
                     <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Capacity</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Price/hr</th>
                     <th className="px-4 py-3 text-center text-xs font-semibold text-[#1C2833] uppercase tracking-wide">Status</th>
-                    <th className="px-4 py-3 text-right text-xs font-semibold text-[#1C2833] uppercase tracking-wide"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map(f => {
                     const theme = getSportTheme(f.name)
                     return (
-                      <tr key={f.id} className="border-b border-[#E5E7E9] last:border-0 hover:bg-[#FADBD8]/20 transition-colors">
+                      <tr
+                        key={f.id}
+                        onClick={() => navigate(`/facilities/${f.id}`)}
+                        className="border-b border-[#E5E7E9] last:border-0 hover:bg-[#FADBD8]/20 cursor-pointer transition-colors"
+                      >
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
@@ -205,11 +208,6 @@ export default function StaffFacilities() {
                         </td>
                         <td className="px-4 py-3 text-center">
                           <Badge status={f.status} />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <Link to={`/facilities/${f.id}`}>
-                            <Button variant="outline" size="sm">View</Button>
-                          </Link>
                         </td>
                       </tr>
                     )
