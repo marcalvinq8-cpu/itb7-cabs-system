@@ -106,7 +106,10 @@ class HistoricalDataSeeder extends Seeder
             $daysAgo1  = 90 + (($i * 14) % 700);
             $date1     = Carbon::now()->subDays($daysAgo1)->toDateString();
             [$s1, $e1] = $timeSlots[$idx];
-            $hours1    = Carbon::createFromTimeString($e1)->diffInHours(Carbon::createFromTimeString($s1));
+            // abs() because Carbon 3's diffInHours() returns a signed difference by
+            // default (Carbon 2 always returned absolute) — without it, $e1 coming
+            // "before" $s1 in the diff direction produces a negative duration/amount.
+            $hours1    = abs(Carbon::createFromTimeString($e1)->diffInHours(Carbon::createFromTimeString($s1)));
             $amount1   = $hours1 * $fac1->price_per_hour;
             $created1  = Carbon::now()->subDays($daysAgo1 + 2);
             $updated1  = Carbon::now()->subDays($daysAgo1 - 3);
@@ -198,7 +201,7 @@ class HistoricalDataSeeder extends Seeder
             $futureDays  = 5 + (($i * 3) % 180);
             $date3       = Carbon::now()->addDays($futureDays)->toDateString();
             [$s3, $e3]   = $timeSlots[($idx + 10) % 15];
-            $hours3      = Carbon::createFromTimeString($e3)->diffInHours(Carbon::createFromTimeString($s3));
+            $hours3      = abs(Carbon::createFromTimeString($e3)->diffInHours(Carbon::createFromTimeString($s3)));
             $amount3     = $hours3 * $fac3->price_per_hour;
             $status3     = $idx < 10 ? 'pending' : 'approved';
             $created3    = Carbon::now()->subDays(3);

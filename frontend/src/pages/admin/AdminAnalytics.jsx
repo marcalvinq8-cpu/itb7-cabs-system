@@ -25,6 +25,7 @@ export default function AdminAnalytics() {
     date_from: '', date_to: '', facility_id: '', status: 'all', payment_status: 'all',
   })
   const [page, setPage] = useState(1)
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const { data: summary } = useQuery({
     queryKey: ['admin', 'analytics', 'summary'],
@@ -68,23 +69,27 @@ export default function AdminAnalytics() {
 
   const setFilter = (k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1) }
 
-  const downloadCsv = () => {
-    const csvParams = { ...reportParams }
-    delete csvParams.page
-    csvParams.format = 'csv'
+  const downloadPdf = () => {
+    const pdfParams = { ...reportParams }
+    delete pdfParams.page
+    pdfParams.format = 'pdf'
     const query = new URLSearchParams(
-      Object.fromEntries(Object.entries(csvParams).filter(([, v]) => v))
+      Object.fromEntries(Object.entries(pdfParams).filter(([, v]) => v))
     ).toString()
-    api.get(`/admin/reports?${query}`, { responseType: 'blob' })
+    setDownloadingPdf(true)
+    // Large exports render server-side as several chunked PDF tables and can take a while —
+    // well past the client's default 15s timeout — so this request gets a longer allowance.
+    api.get(`/admin/reports?${query}`, { responseType: 'blob', timeout: 60_000 })
       .then(res => {
-        const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
+        const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
         const a   = document.createElement('a')
         a.href     = url
-        a.download = `cabs-report-${format(new Date(), 'yyyyMMdd')}.csv`
+        a.download = `cabs-report-${format(new Date(), 'yyyyMMdd')}.pdf`
         a.click()
         URL.revokeObjectURL(url)
       })
       .catch(() => toast.error('Failed to download report.'))
+      .finally(() => setDownloadingPdf(false))
   }
 
   const rows     = reports?.data         ?? []
@@ -261,8 +266,14 @@ export default function AdminAnalytics() {
               <p className="text-xs text-[#1C2833]">{total} records match current filters</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={downloadCsv} className="flex items-center gap-2 self-start sm:self-auto">
-            <Download className="h-4 w-4" /> Export CSV
+          <Button
+            variant="outline"
+            size="sm"
+            loading={downloadingPdf}
+            onClick={downloadPdf}
+            className="flex items-center gap-2 self-start sm:self-auto"
+          >
+            {!downloadingPdf && <Download className="h-4 w-4" />} {downloadingPdf ? 'Generating…' : 'Export PDF'}
           </Button>
         </div>
 

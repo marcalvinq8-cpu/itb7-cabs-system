@@ -88,7 +88,11 @@ class FacilityController extends Controller
             'capacity'      => ['required', 'integer', 'min:1'],
             'price_per_hour'=> ['required', 'numeric', 'min:0'],
             'status'        => ['in:available,under_maintenance,unavailable,closed'],
-            'image'         => ['nullable', 'image', 'max:2048'],
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         $imagePath = null;
@@ -120,7 +124,11 @@ class FacilityController extends Controller
             'capacity'      => ['sometimes', 'integer', 'min:1'],
             'price_per_hour'=> ['sometimes', 'numeric', 'min:0'],
             'status'        => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
-            'image'         => ['nullable', 'image', 'max:2048'],
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         if ($request->hasFile('image')) {

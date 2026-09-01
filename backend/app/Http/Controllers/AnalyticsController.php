@@ -6,6 +6,7 @@ use App\Models\Facility;
 use App\Models\Payment;
 use App\Models\Reservation;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -119,38 +120,51 @@ class AnalyticsController extends Controller
             ->when($request->filled('payment_status'), fn($q) => $q->whereHas('payment', fn($p) => $p->where('status', $request->payment_status)))
             ->orderByDesc('reservation_date');
 
-        if ($request->query('format') === 'csv') {
-            $reservations = $query->get();
+        if ($request->query('format') === 'pdf') {
+            // dompdf keeps a full in-memory layout tree per table, which grows steeply
+            // with row count — cap how many rows go into one PDF (the on-screen/CSV-era
+            // paths are unaffected) and tell the admin to narrow filters for the rest.
+            $maxRows = 1000;
 
-            $escapeFormula = fn($value) => preg_match('/^[=+\-@]/', (string) $value) ? "'" . $value : $value;
+            $totalMatching = (clone $query)->count();
+            $reservations  = $query->limit($maxRows)->get();
+            $truncated     = $totalMatching > $reservations->count();
 
-            $handle = fopen('php://temp', 'r+');
-            fputcsv($handle, ['ID', 'Client', 'Email', 'Facility', 'Date', 'Start', 'End', 'Status', 'Amount', 'Payment Status', 'Receipt']);
+            // Small safety margin on top of the row cap above — chunked tables in the
+            // template already keep this well under the default 512M limit. Rendering
+            // ~1000 rows can take upwards of 30s, so also guard against a stricter
+            // hosting default for max_execution_time than this project's local php.ini.
+            ini_set('memory_limit', '768M');
+            set_time_limit(120);
 
-            foreach ($reservations as $r) {
-                fputcsv($handle, [
-                    $r->id,
-                    $escapeFormula($r->user->full_name ?? ''),
-                    $r->user->email ?? '',
-                    $escapeFormula($r->facility->name ?? ''),
-                    $r->reservation_date->format('Y-m-d'),
-                    $r->start_time,
-                    $r->end_time,
-                    $r->status,
-                    $r->payment->amount ?? 0,
-                    $r->payment->status ?? 'N/A',
-                    $r->payment->receipt_number ?? '',
-                ]);
-            }
+            $totalRevenue = $reservations->reduce(
+                fn($carry, $r) => $carry + ($r->payment && $r->payment->status === 'paid' ? $r->payment->amount : 0),
+                0
+            );
 
-            rewind($handle);
-            $csv = stream_get_contents($handle);
-            fclose($handle);
+            $statusCounts = $reservations->countBy('status');
 
-            return response($csv, 200, [
-                'Content-Type'        => 'text/csv',
-                'Content-Disposition' => 'attachment; filename="cabs-report-' . now()->format('Ymd') . '.csv"',
-            ]);
+            $facilityName = $request->filled('facility_id')
+                ? Facility::find($request->facility_id)?->name
+                : null;
+
+            $pdf = Pdf::loadView('pdf.report', [
+                'reservations'  => $reservations,
+                'totalMatching' => $totalMatching,
+                'truncated'     => $truncated,
+                'generatedAt'   => now(),
+                'totalRevenue'  => $totalRevenue,
+                'statusCounts'  => $statusCounts,
+                'filters'       => [
+                    'date_from'      => $request->query('date_from'),
+                    'date_to'        => $request->query('date_to'),
+                    'facility'       => $facilityName,
+                    'status'         => $request->query('status'),
+                    'payment_status' => $request->query('payment_status'),
+                ],
+            ])->setPaper('a4', 'landscape');
+
+            return $pdf->download('cabs-report-' . now()->format('Ymd') . '.pdf');
         }
 
         return response()->json($query->paginate(25));
