@@ -81,8 +81,8 @@ export default function Dashboard() {
   if (loadingRes) return (
     <div className="space-y-6">
       <Skeleton className="h-8 w-72" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6"><Skeleton className="lg:col-span-3 h-64" /><Skeleton className="lg:col-span-2 h-64" /></div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28" />)}</div>
     </div>
   )
 
@@ -93,21 +93,38 @@ export default function Dashboard() {
         <p className="text-[#1C2833] text-sm mt-0.5">Here's your activity overview</p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(({ label, value, icon: Icon, color, to }) => (
-          <Link key={label} to={to}>
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="py-4">
-                <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', color)}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-                <p className="text-xs text-[#1C2833] mt-0.5 leading-tight">{label}</p>
-              </CardContent>
-            </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Available Facilities</CardTitle>
+          <Link to="/facilities">
+            <Button size="sm" className="flex items-center gap-1.5 !py-1.5">
+              Book Now <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
           </Link>
-        ))}
-      </div>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {loadingFac ? (
+            <div className="flex gap-4 overflow-x-auto pb-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-48 flex-shrink-0" />)}</div>
+          ) : available.length === 0 ? (
+            <p className="text-center text-[#1C2833] text-sm py-6">No facilities available right now</p>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {available.map(f => (
+                <div key={f.id} className="flex-shrink-0 w-48 border border-[#E5E7E9] rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                  <div className="h-24 overflow-hidden">
+                    <FacilityThumb facility={f} />
+                  </div>
+                  <div className="p-2.5">
+                    <p className="font-medium text-xs text-[#1C2833] truncate">{f.name}</p>
+                    <p className="text-[10px] text-[#1C2833] mt-0.5">₱{Number(f.price_per_hour).toLocaleString()}/hr</p>
+                    <Button size="sm" className="w-full mt-2 !text-[10px] !py-1" onClick={() => openModal(f.id)}>Reserve</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <Card className="lg:col-span-3">
@@ -169,36 +186,21 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Available Facilities</CardTitle>
-          <Link to="/facilities" className="text-xs text-[#2980B9] hover:underline flex items-center gap-1">
-            Browse all <ArrowRight className="h-3 w-3" />
-          </Link>
-        </CardHeader>
-        <CardContent className="pt-0">
-          {loadingFac ? (
-            <div className="flex gap-4 overflow-x-auto pb-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-48 flex-shrink-0" />)}</div>
-          ) : available.length === 0 ? (
-            <p className="text-center text-[#1C2833] text-sm py-6">No facilities available right now</p>
-          ) : (
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {available.map(f => (
-                <div key={f.id} className="flex-shrink-0 w-48 border border-[#E5E7E9] rounded-lg overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="h-24 overflow-hidden">
-                    <FacilityThumb facility={f} />
-                  </div>
-                  <div className="p-2.5">
-                    <p className="font-medium text-xs text-[#1C2833] truncate">{f.name}</p>
-                    <p className="text-[10px] text-[#1C2833] mt-0.5">₱{Number(f.price_per_hour).toLocaleString()}/hr</p>
-                    <Button size="sm" className="w-full mt-2 !text-[10px] !py-1" onClick={() => openModal(f.id)}>Reserve</Button>
-                  </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {kpis.map(({ label, value, icon: Icon, color, to }) => (
+          <Link key={label} to={to}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="py-4">
+                <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center mb-3', color)}>
+                  <Icon className="h-5 w-5" />
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
+                <p className="text-xs text-[#1C2833] mt-0.5 leading-tight">{label}</p>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+      </div>
 
       {showModal && (
         <NewReservationModal

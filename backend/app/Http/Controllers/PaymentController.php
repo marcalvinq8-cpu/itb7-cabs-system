@@ -18,12 +18,39 @@ class PaymentController extends Controller
 
     public function adminIndex(Request $request)
     {
-        $payments = Payment::with(['reservation.user', 'reservation.facility'])
+        $query = Payment::with(['reservation.user', 'reservation.facility'])
             ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
-            ->orderByDesc('created_at')
-            ->paginate(20);
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->search;
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('receipt_number', 'like', "%{$search}%")
+                        ->orWhereHas('reservation.user', function ($u) use ($search) {
+                            $u->where('full_name', 'like', "%{$search}%")
+                              ->orWhere('email', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('reservation.facility', fn($f) => $f->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->orderByDesc('created_at');
 
-        return response()->json($payments);
+        $paginated = $query->paginate(20);
+
+        // Stat-card totals — always reflect the whole table, independent of the
+        // current page/status filter/search, so they don't collapse to whatever
+        // happens to be on the current page (only ~1.5% of payments at a time).
+        $counts = [
+            'total_collected' => (float) Payment::where('status', 'paid')->sum('amount'),
+            'paid'             => Payment::where('status', 'paid')->count(),
+            'pending'          => Payment::where('status', 'pending')->count(),
+            'failed'           => Payment::where('status', 'failed')->count(),
+            'cancelled'        => Payment::where('status', 'cancelled')->count(),
+            'rejected'         => Payment::where('status', 'rejected')->count(),
+        ];
+
+        return response()->json([
+            ...$paginated->toArray(),
+            'counts' => $counts,
+        ]);
     }
 
     // ─── Payment Link: Create a hosted checkout link ─────────────────────────

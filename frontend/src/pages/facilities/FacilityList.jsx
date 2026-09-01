@@ -86,9 +86,6 @@ export default function FacilityList() {
           <Skeleton className="h-7 w-32" />
           <Skeleton className="h-4 w-56" />
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
-        </div>
         <div className="flex gap-2">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-8 w-20 rounded-full" />)}
         </div>
@@ -104,6 +101,9 @@ export default function FacilityList() {
             </Card>
           ))}
         </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
       </div>
     )
   }
@@ -117,26 +117,6 @@ export default function FacilityList() {
       <div className="border-l-4 border-[#C0392B] pl-4">
         <h1 className="text-2xl font-bold text-[#1C2833]">Facilities</h1>
         <p className="text-[#1C2833] text-sm mt-0.5">Browse and reserve sports facilities</p>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Facilities',     value: facilities.length, icon: Building2,    color: 'text-[#2980B9] bg-[#D6EAF8]' },
-          { label: 'Available',            value: countAvailable,    icon: CheckCircle2, color: 'text-[#27AE60] bg-[#D5F5E3]' },
-          { label: 'Under Maintenance',    value: countMaintenance,  icon: AlertTriangle,color: 'text-[#F39C12] bg-[#FEF9E7]' },
-          { label: 'Unavailable / Closed', value: countOther,        icon: Ban,          color: 'text-[#C0392B] bg-[#FADBD8]' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="hover:shadow-md transition-shadow">
-            <CardContent className="py-4">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Search bar */}
@@ -219,6 +199,26 @@ export default function FacilityList() {
           )}
         </>
       )}
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Facilities',     value: facilities.length, icon: Building2,    color: 'text-[#2980B9] bg-[#D6EAF8]' },
+          { label: 'Available',            value: countAvailable,    icon: CheckCircle2, color: 'text-[#27AE60] bg-[#D5F5E3]' },
+          { label: 'Under Maintenance',    value: countMaintenance,  icon: AlertTriangle,color: 'text-[#F39C12] bg-[#FEF9E7]' },
+          { label: 'Unavailable / Closed', value: countOther,        icon: Ban,          color: 'text-[#C0392B] bg-[#FADBD8]' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <Card key={label} className="hover:shadow-md transition-shadow">
+            <CardContent className="py-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

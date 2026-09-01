@@ -31,11 +31,19 @@ class ReceiptController extends Controller
                 ->toArray();
         }
 
+        // Narrow "till roll" page instead of A4 — 80mm is the standard thermal
+        // receipt width. Height is estimated from content (base layout + one line
+        // per amenity) rather than a fixed A4 height, so there's no leftover blank
+        // page below a short receipt and no overflow onto a second page for a long
+        // one.
+        $widthPt  = 227; // 80mm
+        $heightPt = 560 + (count($amenities) * 16);
+
         $pdf = Pdf::loadView('pdf.receipt', [
             'reservation' => $reservation,
             'payment'     => $payment,
             'amenities'   => $amenities,
-        ])->setPaper('a4');
+        ])->setPaper([0, 0, $widthPt, $heightPt]);
 
         $filename = "CABS-Receipt-{$payment->receipt_number}.pdf";
 

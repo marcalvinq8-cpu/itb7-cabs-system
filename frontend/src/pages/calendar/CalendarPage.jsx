@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -11,21 +11,49 @@ import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 
-const STATUS_COLORS = {
+// Admin keeps the original distinct per-status colors (useful for triage: at a
+// glance, which requests are pending vs approved vs confirmed).
+const ADMIN_STATUS_COLORS = {
   pending:   '#F39C12',
   approved:  '#2980B9',
   confirmed: '#27AE60',
   cancelled: '#717D7E',
   rejected:  '#C0392B',
 }
-
-const LEGEND = [
+const ADMIN_LEGEND = [
   { label: 'Pending',   color: '#F39C12', desc: 'Awaiting approval' },
   { label: 'Approved',  color: '#2980B9', desc: 'Approved, awaiting payment' },
   { label: 'Confirmed', color: '#27AE60', desc: 'Paid and confirmed' },
   { label: 'Cancelled', color: '#717D7E', desc: 'Cancelled' },
   { label: 'Rejected',  color: '#C0392B', desc: 'Rejected' },
 ]
+
+// Client view: Approved/Confirmed (the resource is actually secured — payment made
+// or in progress) render red — occupied. Pending keeps its own color since it's only
+// a request, not yet approved. Cancelled/Rejected (never happened, or no longer
+// holds the slot) are gray.
+const OCCUPIED_COLOR = '#C0392B'
+const FREE_COLOR      = '#717D7E'
+const PENDING_COLOR   = '#F39C12'
+const CLIENT_STATUS_COLORS = {
+  pending:   PENDING_COLOR,
+  approved:  OCCUPIED_COLOR,
+  confirmed: OCCUPIED_COLOR,
+  completed: OCCUPIED_COLOR,
+  cancelled: FREE_COLOR,
+  rejected:  FREE_COLOR,
+}
+const CLIENT_LEGEND = [
+  { label: 'Pending',   color: PENDING_COLOR,  desc: 'Awaiting approval' },
+  { label: 'Approved',  color: OCCUPIED_COLOR, desc: 'Approved, awaiting payment — slot held' },
+  { label: 'Confirmed', color: OCCUPIED_COLOR, desc: 'Paid and confirmed — slot held' },
+  { label: 'Cancelled', color: FREE_COLOR,     desc: 'Cancelled — slot free' },
+  { label: 'Rejected',  color: FREE_COLOR,     desc: 'Rejected — slot free' },
+]
+
+// A date counts as "booked" (day cell tinted red) if it has at least one reservation
+// that's still active — cancelled/rejected reservations don't hold the date anymore.
+const ACTIVE_STATUSES = ['pending', 'approved', 'confirmed', 'completed']
 
 export default function CalendarPage({ adminView = false }) {
   const navigate = useNavigate()
@@ -48,14 +76,39 @@ export default function CalendarPage({ adminView = false }) {
     refetchInterval: 60_000,
   })
 
+  const LEGEND = adminView ? ADMIN_LEGEND : CLIENT_LEGEND
+
   const events = rawEvents
     .filter(e => selectedStatus === 'all' || e.extendedProps?.status === selectedStatus)
-    .map(e => ({
-      ...e,
-      backgroundColor: e.backgroundColor ?? STATUS_COLORS[e.extendedProps?.status] ?? '#717D7E',
-      borderColor:     e.borderColor     ?? STATUS_COLORS[e.extendedProps?.status] ?? '#717D7E',
-      textColor:       '#FFFFFF',
-    }))
+    .map(e => {
+      const status = e.extendedProps?.status
+      const color  = adminView
+        ? (ADMIN_STATUS_COLORS[status] ?? '#717D7E')
+        : (CLIENT_STATUS_COLORS[status] ?? FREE_COLOR)
+      return { ...e, backgroundColor: color, borderColor: color, textColor: '#FFFFFF' }
+    })
+
+  // Independent of the status filter above — a date is "booked" based on all active
+  // reservations, not just whichever status pins are currently shown.
+  const bookedDates = useMemo(() => {
+    const set = new Set()
+    rawEvents.forEach(e => {
+      if (ACTIVE_STATUSES.includes(e.extendedProps?.status) && e.extendedProps?.reservationDate) {
+        set.add(e.extendedProps.reservationDate)
+      }
+    })
+    return set
+  }, [rawEvents])
+
+  const dayCellClassNames = useCallback((arg) => {
+    const y = arg.date.getFullYear()
+    const m = String(arg.date.getMonth() + 1).padStart(2, '0')
+    const d = String(arg.date.getDate()).padStart(2, '0')
+    if (!bookedDates.has(`${y}-${m}-${d}`)) return []
+    // Admin/staff scan many bookings across all users at once, so their tint is a
+    // stronger, more obviously "red" wash than the client's subtler highlight.
+    return adminView ? ['fc-day-booked', 'fc-day-booked-strong'] : ['fc-day-booked']
+  }, [bookedDates, adminView])
 
   const handleDatesSet = useCallback((info) => {
     setDateRange({ start: info.startStr.slice(0,10), end: info.endStr.slice(0,10) })
@@ -117,26 +170,6 @@ export default function CalendarPage({ adminView = false }) {
         </div>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Events',  value: totalEvents,    icon: CalendarDays,  color: 'text-[#2980B9] bg-[#D6EAF8]' },
-          { label: 'Pending',       value: pendingCount,   icon: Clock,         color: 'text-[#F39C12] bg-[#FEF9E7]' },
-          { label: 'Confirmed',     value: confirmedCount, icon: CheckCircle2,  color: 'text-[#27AE60] bg-[#D5F5E3]' },
-          { label: 'Cancelled / Rejected', value: rejectedCount, icon: XCircle, color: 'text-[#C0392B] bg-[#FADBD8]' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="hover:shadow-md transition-shadow">
-            <CardContent className="py-4">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Legend */}
       <div className="flex flex-wrap gap-2">
         {LEGEND.map(l => (
@@ -163,6 +196,10 @@ export default function CalendarPage({ adminView = false }) {
             Clear filter
           </button>
         )}
+        <span className="flex items-center gap-1.5 text-xs text-[#1C2833] ml-1">
+          <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: 'rgba(192,57,43,0.18)', border: '1px solid rgba(192,57,43,0.4)' }} />
+          Date already reserved/booked
+        </span>
       </div>
 
       {/* Calendar card */}
@@ -190,6 +227,7 @@ export default function CalendarPage({ adminView = false }) {
             datesSet={handleDatesSet}
             eventClick={handleEventClick}
             dateClick={handleDateClick}
+            dayCellClassNames={dayCellClassNames}
             height="auto"
             dayMaxEvents={3}
             eventDisplay="block"
@@ -198,6 +236,26 @@ export default function CalendarPage({ adminView = false }) {
         </CardContent>
       </Card>
 
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Events',  value: totalEvents,    icon: CalendarDays,  color: 'text-[#2980B9] bg-[#D6EAF8]' },
+          { label: 'Pending',       value: pendingCount,   icon: Clock,         color: 'text-[#F39C12] bg-[#FEF9E7]' },
+          { label: 'Confirmed',     value: confirmedCount, icon: CheckCircle2,  color: 'text-[#27AE60] bg-[#D5F5E3]' },
+          { label: 'Cancelled / Rejected', value: rejectedCount, icon: XCircle, color: 'text-[#C0392B] bg-[#FADBD8]' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <Card key={label} className="hover:shadow-md transition-shadow">
+            <CardContent className="py-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       <style>{`
         .fc-button-primary { background-color: #C0392B !important; border-color: #96281B !important; border-radius: 8px !important; font-size: 0.8rem !important; }
         .fc-button-primary:hover { background-color: #96281B !important; }
@@ -205,6 +263,10 @@ export default function CalendarPage({ adminView = false }) {
         .fc-button-primary:not(:disabled):active { background-color: #96281B !important; }
         .fc-today-button:disabled { background-color: #F1948A !important; border-color: #F1948A !important; }
         .fc-daygrid-day.fc-day-today { background-color: #FADBD8 !important; }
+        /* Day cells with at least one active reservation — takes priority over the
+           today-highlight above since it's declared after it. */
+        .fc-daygrid-day.fc-day-booked { background-color: rgba(192, 57, 43, 0.16) !important; }
+        .fc-daygrid-day.fc-day-booked-strong { background-color: rgba(192, 57, 43, 0.32) !important; }
         .fc .fc-toolbar-title { color: #1C2833; font-size: 1.1rem; font-weight: 700; }
         .fc-col-header-cell-cushion { color: #717D7E; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
         .fc-daygrid-day-number { color: #1C2833; font-size: 0.8rem; }

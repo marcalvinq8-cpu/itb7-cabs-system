@@ -104,13 +104,13 @@ export default function MyReservations() {
         </div>
         <Skeleton className="h-9 w-36" />
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
-      </div>
       <div className="flex gap-2">
         {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-full" />)}
       </div>
       {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+      </div>
     </div>
   )
 
@@ -126,26 +126,6 @@ export default function MyReservations() {
         <Button className="flex items-center gap-2" onClick={() => setShowModal(true)}>
           <Plus className="h-4 w-4" /> New Reservation
         </Button>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Bookings', value: reservations.length, icon: ClipboardList, color: 'text-[#2980B9] bg-[#D6EAF8]' },
-          { label: 'Upcoming',       value: upcoming,            icon: Calendar,      color: 'text-[#27AE60] bg-[#D5F5E3]' },
-          { label: 'Pending',        value: pending,             icon: AlertCircle,   color: 'text-[#F39C12] bg-[#FEF9E7]' },
-          { label: 'Completed',      value: completed,           icon: CheckCircle2,  color: 'text-[#8E44AD] bg-[#F5EEF8]' },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <Card key={label} className="hover:shadow-md transition-shadow">
-            <CardContent className="py-4">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
-              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       {/* Search bar */}
@@ -198,6 +178,26 @@ export default function MyReservations() {
           ))}
         </div>
       )}
+
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total Bookings', value: reservations.length, icon: ClipboardList, color: 'text-[#2980B9] bg-[#D6EAF8]' },
+          { label: 'Upcoming',       value: upcoming,            icon: Calendar,      color: 'text-[#27AE60] bg-[#D5F5E3]' },
+          { label: 'Pending',        value: pending,             icon: AlertCircle,   color: 'text-[#F39C12] bg-[#FEF9E7]' },
+          { label: 'Completed',      value: completed,           icon: CheckCircle2,  color: 'text-[#8E44AD] bg-[#F5EEF8]' },
+        ].map(({ label, value, icon: Icon, color }) => (
+          <Card key={label} className="hover:shadow-md transition-shadow">
+            <CardContent className="py-4">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${color}`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="text-2xl font-bold text-[#1C2833]">{value}</p>
+              <p className="text-xs text-[#1C2833] mt-0.5">{label}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
 
       {showModal  && <NewReservationModal onClose={() => setShowModal(false)} />}
       {viewingId  && <ReservationDetailModal reservationId={viewingId} onClose={() => setViewingId(null)} />}

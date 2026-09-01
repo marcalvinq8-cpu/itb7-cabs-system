@@ -2,224 +2,127 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Official Receipt – {{ $payment->receipt_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; }
+        /* DejaVu Sans Mono (bundled with dompdf) instead of Courier New — the core
+           PDF Courier font dompdf falls back to has no glyph for the peso sign (₱,
+           U+20B1), which renders as "?". DejaVu Sans Mono covers it and is still
+           monospace, so it keeps the till-receipt look. */
+        body { font-family: 'DejaVu Sans Mono', monospace; font-size: 11px; color: #000; }
 
-        .page { padding: 36px 48px; }
+        .receipt { padding: 16px 14px; }
 
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a56db; padding-bottom: 16px; margin-bottom: 20px; }
-        .header-left h1 { font-size: 22px; font-weight: 700; color: #1a56db; letter-spacing: 1px; }
-        .header-left p  { font-size: 11px; color: #555; margin-top: 2px; }
-        .header-right   { text-align: right; }
-        .header-right .badge { background: #1a56db; color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; }
-        .header-right .receipt-no { font-size: 18px; font-weight: 700; margin-top: 6px; color: #1a1a1a; }
-        .header-right .issued-date { font-size: 11px; color: #555; margin-top: 2px; }
+        .center { text-align: center; }
+        .bold   { font-weight: bold; }
+        .muted  { color: #444; }
+        .small  { font-size: 9px; }
 
-        /* Watermark */
-        .watermark {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 72px; font-weight: 900; color: rgba(26,86,219,0.07);
-            text-transform: uppercase; letter-spacing: 6px; z-index: 0;
-            pointer-events: none; white-space: nowrap;
+        .store-name { font-size: 22px; font-weight: bold; letter-spacing: 3px; }
+        .store-line { font-size: 9.5px; margin-top: 2px; }
+
+        .section-title { text-align: center; font-weight: bold; letter-spacing: 1.5px; font-size: 12px; margin: 8px 0; }
+
+        .divider-solid  { border-top: 1.5px solid #000; margin: 8px 0; }
+        .divider-dashed { border-top: 1px dashed #000; margin: 8px 0; }
+
+        /* Label/value line — a table (not flex, which dompdf renders unreliably —
+           it silently collapsed to two touching inline spans with no gap when this
+           was flex) keeps the amount right-aligned regardless of how long the label
+           or value text is. */
+        table.row { width: 100%; border-collapse: collapse; margin: 2px 0; }
+        table.row td { padding: 0; vertical-align: top; }
+        table.row td.value { text-align: right; white-space: nowrap; padding-left: 8px; }
+
+        .item-name { font-weight: bold; }
+        .item-sub  { font-size: 9.5px; color: #444; margin-top: 1px; }
+
+        .total-row { font-size: 14px; font-weight: bold; margin-top: 4px; }
+
+        .status-paid {
+            display: block; text-align: center; font-weight: bold; letter-spacing: 2px;
+            border: 2px solid #000; padding: 3px 0; margin: 10px 0; font-size: 12px;
         }
 
-        /* Sections */
-        .section { margin-bottom: 20px; }
-        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1a56db; border-bottom: 1px solid #e0e7ff; padding-bottom: 4px; margin-bottom: 10px; }
+        .footer { text-align: center; margin-top: 12px; }
+        .footer .thanks { font-weight: bold; font-size: 11px; }
+        .footer .fine-print { font-size: 8.5px; color: #444; margin-top: 6px; line-height: 1.4; }
 
-        .two-col { display: flex; gap: 24px; }
-        .two-col .col { flex: 1; }
-
-        .field { margin-bottom: 6px; }
-        .field .label { font-size: 10px; text-transform: uppercase; color: #888; letter-spacing: 0.5px; }
-        .field .value { font-size: 13px; font-weight: 600; color: #1a1a1a; margin-top: 1px; }
-
-        /* Table */
-        table { width: 100%; border-collapse: collapse; }
-        thead tr { background: #1a56db; color: #fff; }
-        thead th { padding: 8px 10px; text-align: left; font-size: 11px; letter-spacing: 0.5px; }
-        tbody tr { border-bottom: 1px solid #f0f0f0; }
-        tbody td { padding: 7px 10px; font-size: 12px; }
-        tbody tr:nth-child(even) { background: #f8faff; }
-
-        /* Total box */
-        .total-box { margin-top: 16px; text-align: right; }
-        .total-box table { width: auto; margin-left: auto; }
-        .total-box td { padding: 4px 8px; font-size: 13px; }
-        .total-box .grand-total td { font-size: 16px; font-weight: 700; color: #1a56db; border-top: 2px solid #1a56db; padding-top: 8px; }
-
-        /* Status badge */
-        .status-paid { display: inline-block; background: #dcfce7; color: #16a34a; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 99px; border: 1px solid #86efac; }
-
-        /* Footer */
-        .footer { margin-top: 32px; border-top: 1px solid #e0e7ff; padding-top: 14px; font-size: 10px; color: #888; text-align: center; }
-        .footer strong { color: #1a56db; }
-
-        .note { background: #fffbeb; border: 1px solid #fcd34d; padding: 10px 14px; border-radius: 4px; font-size: 11px; color: #78350f; margin-top: 16px; }
+        .barcode-text { text-align: center; font-size: 9px; letter-spacing: 4px; margin-top: 10px; }
     </style>
 </head>
 <body>
-<div class="watermark">Official Receipt</div>
+<div class="receipt">
 
-<div class="page">
+    {{-- Store header --}}
+    <div class="center store-name">CABS</div>
+    <div class="center store-line">Cabuyao Athletes Basic School</div>
+    <div class="center store-line">Cabuyao, Laguna, Philippines</div>
 
-    {{-- Header --}}
-    <div class="header">
-        <div class="header-left">
-            <h1>CABS</h1>
-            <p>Cabuyao Athletes Basic School</p>
-            <p>Cabuyao, Laguna, Philippines</p>
-            <p>contact@cabs.edu.ph</p>
-        </div>
-        <div class="header-right">
-            <span class="badge">Official Receipt</span>
-            <div class="receipt-no">{{ $payment->receipt_number }}</div>
-            <div class="issued-date">Issued: {{ $payment->paid_at->format('F d, Y g:i A') }}</div>
-        </div>
-    </div>
+    <div class="divider-solid"></div>
+    <div class="section-title">OFFICIAL RECEIPT</div>
+    <div class="divider-solid"></div>
 
-    {{-- Client + Payment Info --}}
-    <div class="two-col section">
-        <div class="col">
-            <div class="section-title">Client Information</div>
-            <div class="field">
-                <div class="label">Full Name</div>
-                <div class="value">{{ $reservation->user->full_name }}</div>
-            </div>
-            <div class="field">
-                <div class="label">Email Address</div>
-                <div class="value">{{ $reservation->user->email }}</div>
-            </div>
-            <div class="field">
-                <div class="label">Contact Number</div>
-                <div class="value">{{ $reservation->user->contact_number ?? '—' }}</div>
-            </div>
-            <div class="field">
-                <div class="label">Address</div>
-                <div class="value">{{ $reservation->user->address ?? '—' }}</div>
-            </div>
-        </div>
-        <div class="col">
-            <div class="section-title">Payment Information</div>
-            <div class="field">
-                <div class="label">Payment Status</div>
-                <div class="value"><span class="status-paid">PAID</span></div>
-            </div>
-            <div class="field">
-                <div class="label">Payment Method</div>
-                <div class="value">{{ strtoupper($payment->payment_method ?? '—') }}</div>
-            </div>
-            <div class="field">
-                <div class="label">Transaction Reference</div>
-                <div class="value">{{ $payment->paymongo_payment_intent_id ?? '—' }}</div>
-            </div>
-            <div class="field">
-                <div class="label">Date Paid</div>
-                <div class="value">{{ $payment->paid_at->format('F d, Y') }}</div>
-            </div>
-        </div>
-    </div>
+    <table class="row"><tr><td>No:</td><td class="value bold">{{ $payment->receipt_number }}</td></tr></table>
+    <table class="row"><tr><td>Date:</td><td class="value">{{ $payment->paid_at->format('M d, Y g:i A') }}</td></tr></table>
 
-    {{-- Booking Details --}}
-    <div class="section">
-        <div class="section-title">Booking Details</div>
-        <div class="two-col">
-            <div class="col">
-                <div class="field">
-                    <div class="label">Facility</div>
-                    <div class="value">{{ $reservation->facility->name }}</div>
-                </div>
-                <div class="field">
-                    <div class="label">Location</div>
-                    <div class="value">{{ $reservation->facility->location }}</div>
-                </div>
-                <div class="field">
-                    <div class="label">Purpose</div>
-                    <div class="value">{{ $reservation->purpose }}</div>
-                </div>
-            </div>
-            <div class="col">
-                <div class="field">
-                    <div class="label">Reservation Date</div>
-                    <div class="value">{{ $reservation->reservation_date->format('F d, Y') }}</div>
-                </div>
-                <div class="field">
-                    <div class="label">Time</div>
-                    <div class="value">
-                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $reservation->start_time)->format('g:i A') }}
-                        –
-                        {{ \Carbon\Carbon::createFromFormat('H:i:s', $reservation->end_time)->format('g:i A') }}
-                    </div>
-                </div>
-                <div class="field">
-                    <div class="label">Number of Participants</div>
-                    <div class="value">{{ $reservation->number_of_participants }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="divider-dashed"></div>
 
-    {{-- Amenities --}}
-    @if(!empty($amenities))
-    <div class="section">
-        <div class="section-title">Selected Amenities</div>
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Amenity</th>
-                    <th>Quantity</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($amenities as $index => $amenity)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $amenity['name'] }}</td>
-                    <td>{{ $amenity['quantity'] }}</td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    <div>Billed to:</div>
+    <div class="bold">{{ $reservation->user->full_name }}</div>
+    <div class="small muted">{{ $reservation->user->email }}</div>
+    @if($reservation->user->contact_number)
+        <div class="small muted">{{ $reservation->user->contact_number }}</div>
     @endif
 
-    {{-- Total --}}
-    <div class="total-box">
-        <table>
-            <tbody>
-                <tr>
-                    <td>Subtotal</td>
-                    <td>₱{{ number_format($payment->amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td>Discount</td>
-                    <td>₱0.00</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr class="grand-total">
-                    <td><strong>TOTAL PAID</strong></td>
-                    <td><strong>₱{{ number_format($payment->amount, 2) }}</strong></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+    <div class="divider-dashed"></div>
 
-    <div class="note">
-        This is an official receipt issued by the Cabuyao Athletes Basic School (CABS) Online Reservation System.
-        Please keep this receipt for your records. For concerns, contact us at contact@cabs.edu.ph.
+    <div class="item-name">{{ $reservation->facility->name }}</div>
+    @if($reservation->facility->location)
+        <div class="item-sub">{{ $reservation->facility->location }}</div>
+    @endif
+    <div class="item-sub">
+        {{ $reservation->reservation_date->format('M d, Y') }} &middot;
+        {{ \Carbon\Carbon::createFromFormat('H:i:s', $reservation->start_time)->format('g:i A') }}
+        &ndash;
+        {{ \Carbon\Carbon::createFromFormat('H:i:s', $reservation->end_time)->format('g:i A') }}
     </div>
+    <div class="item-sub">{{ $reservation->number_of_participants }} participant(s) &middot; {{ $reservation->purpose }}</div>
+
+    @if(!empty($amenities))
+        <div class="divider-dashed"></div>
+        <div class="bold small">AMENITIES</div>
+        @foreach($amenities as $amenity)
+            <div class="small">{{ $amenity['quantity'] }}x {{ $amenity['name'] }}</div>
+        @endforeach
+    @endif
+
+    <div class="divider-dashed"></div>
+
+    <table class="row"><tr><td>Subtotal</td><td class="value">&#8369;{{ number_format($payment->amount, 2) }}</td></tr></table>
+    <table class="row"><tr><td>Discount</td><td class="value">&#8369;0.00</td></tr></table>
+    <div class="divider-solid"></div>
+    <table class="row total-row"><tr><td>TOTAL PAID</td><td class="value">&#8369;{{ number_format($payment->amount, 2) }}</td></tr></table>
+
+    <div class="divider-solid"></div>
+
+    <table class="row"><tr><td>Payment Method:</td><td class="value">{{ strtoupper($payment->payment_method ?? '—') }}</td></tr></table>
+    @if($payment->paymongo_payment_intent_id)
+        <table class="row small"><tr><td>Ref:</td><td class="value">{{ $payment->paymongo_payment_intent_id }}</td></tr></table>
+    @endif
+
+    <div class="status-paid">PAID</div>
+
+    <div class="barcode-text">*{{ $payment->receipt_number }}*</div>
 
     <div class="footer">
-        <strong>CABS Online Reservation, Booking & Payment System</strong><br>
-        Cabuyao Athletes Basic School · Cabuyao, Laguna, Philippines · contact@cabs.edu.ph<br>
-        This document is system-generated and does not require a signature.
+        <div class="thanks">Thank you for booking with CABS!</div>
+        <div class="fine-print">
+            This is an official receipt issued by the Cabuyao Athletes Basic School (CABS)
+            Online Reservation System. Please keep this receipt for your records.<br>
+            For concerns, contact us at contact@cabs.edu.ph.<br><br>
+            This receipt is system-generated and does not require a signature.
+        </div>
     </div>
 
 </div>

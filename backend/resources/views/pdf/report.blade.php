@@ -12,13 +12,15 @@
 
         .page { padding: 28px 36px; }
 
-        /* Header */
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #C0392B; padding-bottom: 14px; margin-bottom: 16px; }
-        .header-left h1 { font-size: 20px; font-weight: 700; color: #C0392B; letter-spacing: 1px; }
-        .header-left p  { font-size: 10px; color: #555; margin-top: 2px; }
-        .header-right   { text-align: right; }
-        .header-right .badge { display: inline-block; background: #C0392B; color: #fff; font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; }
-        .header-right .generated { font-size: 10px; color: #555; margin-top: 6px; }
+        /* Header — logo/wordmark centered, stacked */
+        .header { text-align: center; border-bottom: 3px solid #C0392B; padding-bottom: 16px; margin-bottom: 16px; }
+        .header h1 { font-size: 48px; font-weight: 900; color: #C0392B; letter-spacing: 4px; line-height: 1; }
+        .header p  { font-size: 10px; color: #555; margin-top: 3px; }
+        .header .badge { display: inline-block; background: #C0392B; color: #fff; font-size: 10px; font-weight: 700; padding: 4px 14px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
+        .header .generated { font-size: 10px; color: #555; margin-top: 6px; }
+
+        /* "Data" section heading above the table */
+        h2.section-title { font-size: 15px; font-weight: 700; color: #1a1a1a; border-left: 4px solid #C0392B; padding-left: 10px; margin-bottom: 10px; }
 
         /* Filters summary */
         .filters { background: #FADBD8; border: 1px solid #f3c6c1; border-radius: 4px; padding: 8px 12px; margin-bottom: 16px; }
@@ -48,23 +50,14 @@
         table.report tbody td { padding: 5px 8px; font-size: 10px; vertical-align: top; }
         table.report tbody tr:nth-child(even) { background: #FBF3F2; }
 
-        .col-id       { width: 5%; }
-        .col-client   { width: 18%; }
-        .col-facility { width: 14%; }
-        .col-date     { width: 9%; }
-        .col-time     { width: 12%; }
-        .col-status   { width: 9%; }
-        .col-amount   { width: 10%; text-align: right; }
-        .col-payment  { width: 9%; }
-        .col-receipt  { width: 14%; }
+        .col-client   { width: 24%; }
+        .col-facility { width: 18%; }
+        .col-date     { width: 12%; }
+        .col-time     { width: 16%; }
+        .col-amount   { width: 13%; text-align: right; }
+        .col-receipt  { width: 17%; }
 
-        .muted { color: #888; }
         .email { display: block; font-size: 9px; color: #888; }
-
-        .pill { display: inline-block; padding: 1px 7px; border-radius: 99px; font-size: 9px; font-weight: 700; text-transform: capitalize; }
-        .pill-completed, .pill-approved, .pill-confirmed, .pill-paid { background: #D5F5E3; color: #1E8449; }
-        .pill-pending { background: #FEF9E7; color: #B7950B; }
-        .pill-rejected, .pill-cancelled, .pill-failed, .pill-expired { background: #FADBD8; color: #96281B; }
 
         /* Footer */
         .footer { margin-top: 18px; border-top: 1px solid #e5e7e9; padding-top: 10px; font-size: 9px; color: #888; text-align: center; }
@@ -74,17 +67,13 @@
 <body>
 <div class="page">
 
-    {{-- Header --}}
+    {{-- Header — centered logo/wordmark --}}
     <div class="header">
-        <div class="header-left">
-            <h1>CABS</h1>
-            <p>Cabuyao Athletes Basic School</p>
-            <p>Cabuyao, Laguna, Philippines</p>
-        </div>
-        <div class="header-right">
-            <span class="badge">Reservation Report</span>
-            <div class="generated">Generated: {{ $generatedAt->format('F d, Y g:i A') }}</div>
-        </div>
+        <h1>CABS</h1>
+        <p>Cabuyao Athletes Basic School</p>
+        <p>Cabuyao, Laguna, Philippines</p>
+        <div class="badge">Reservation Report</div>
+        <div class="generated">Generated: {{ $generatedAt->format('F d, Y g:i A') }}</div>
     </div>
 
     {{-- Filters applied --}}
@@ -108,26 +97,24 @@
     </div>
     @endif
 
+    <h2 class="section-title">Reservation Data</h2>
+
     {{-- Table — chunked into ~150-row tables (see the CSS comment above) --}}
     @forelse($reservations->chunk(150) as $chunk)
     <table class="report">
         <thead>
             <tr>
-                <th class="col-id">#</th>
                 <th class="col-client">Client</th>
                 <th class="col-facility">Facility</th>
                 <th class="col-date">Date</th>
                 <th class="col-time">Time</th>
-                <th class="col-status">Status</th>
                 <th class="col-amount">Amount</th>
-                <th class="col-payment">Payment</th>
                 <th class="col-receipt">Receipt #</th>
             </tr>
         </thead>
         <tbody>
             @foreach($chunk as $r)
             <tr>
-                <td class="col-id">{{ $r->id }}</td>
                 <td class="col-client">
                     {{ $r->user->full_name ?? '—' }}
                     <span class="email">{{ $r->user->email ?? '' }}</span>
@@ -135,15 +122,7 @@
                 <td class="col-facility">{{ $r->facility->name ?? '—' }}</td>
                 <td class="col-date">{{ $r->reservation_date?->format('M d, Y') ?? '—' }}</td>
                 <td class="col-time">{{ substr($r->start_time, 0, 5) }} &ndash; {{ substr($r->end_time, 0, 5) }}</td>
-                <td class="col-status"><span class="pill pill-{{ $r->status }}">{{ $r->status }}</span></td>
                 <td class="col-amount">&#8369;{{ number_format($r->payment->amount ?? 0, 2) }}</td>
-                <td class="col-payment">
-                    @if($r->payment)
-                        <span class="pill pill-{{ $r->payment->status }}">{{ $r->payment->status }}</span>
-                    @else
-                        <span class="muted">N/A</span>
-                    @endif
-                </td>
                 <td class="col-receipt">{{ $r->payment->receipt_number ?? '—' }}</td>
             </tr>
             @endforeach

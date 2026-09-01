@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
-import { Check, X, ChevronLeft, ChevronRight, CalendarDays, Clock, ClipboardList, AlertCircle, CheckCircle2, Banknote } from 'lucide-react'
+import { Check, X, ChevronLeft, ChevronRight, CalendarDays, Clock, ClipboardList, AlertCircle, CheckCircle2, Banknote, Eye } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
@@ -13,6 +13,7 @@ import Input from '@/components/ui/Input'
 import Label from '@/components/ui/Label'
 import Modal from '@/components/ui/Modal'
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
+import ReceiptModal from '@/components/ReceiptModal'
 
 const STATUS_OPTIONS = [
   { value: 'all',       label: 'All'       },
@@ -58,6 +59,7 @@ export default function AdminReservations() {
   const [rejectModal, setRejectModal] = useState(null)
   const [rejectNote,  setRejectNote]  = useState('')
   const [detailModal, setDetailModal] = useState(null)
+  const [receiptId,   setReceiptId]   = useState(null)
 
   const params = {
     page,
@@ -456,6 +458,19 @@ export default function AdminReservations() {
                   <dd className="text-gray-900 font-medium">{value ?? '—'}</dd>
                 </div>
               ))}
+              {r.payment?.status === 'paid' && (
+                <div className="flex gap-2">
+                  <dt className="text-[#1C2833] w-28 shrink-0">Receipt</dt>
+                  <dd>
+                    <button
+                      onClick={() => setReceiptId(r.id)}
+                      className="flex items-center gap-1.5 text-[#2980B9] hover:underline font-medium"
+                    >
+                      <Eye className="h-3.5 w-3.5" /> View Receipt
+                    </button>
+                  </dd>
+                </div>
+              )}
               {r.admin_note && (
                 <div className="flex gap-2">
                   <dt className="text-[#1C2833] w-28 shrink-0">Admin Note</dt>
@@ -499,6 +514,10 @@ export default function AdminReservations() {
             className="mt-1 w-full rounded-lg border border-[#E5E7E9] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FADBD8] focus:border-[#C0392B] resize-none"
           />
         </Modal>
+      )}
+
+      {receiptId && (
+        <ReceiptModal reservationId={receiptId} onClose={() => setReceiptId(null)} />
       )}
     </div>
   )

@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { format, parseISO } from 'date-fns'
+import {
+  format, parseISO,
+  startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear,
+  startOfISOWeek, endOfISOWeek, setISOWeek, setISOWeekYear,
+} from 'date-fns'
 import { toast } from 'sonner'
 import {
   AreaChart, Area, BarChart, Bar,
@@ -8,7 +12,7 @@ import {
 } from 'recharts'
 import {
   Download, FileText, ChevronLeft, ChevronRight,
-  TrendingUp, ClipboardList, Banknote, CheckCircle2, Building2, Users,
+  TrendingUp, ClipboardList, Banknote, CheckCircle2, Building2, Users, CalendarRange,
 } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -18,11 +22,66 @@ import Spinner from '@/components/ui/Spinner'
 import Input from '@/components/ui/Input'
 import Label from '@/components/ui/Label'
 
-const SELECT_CLS = 'mt-1 block w-full rounded-lg border border-[#E5E7E9] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FADBD8] focus:border-[#C0392B] bg-white'
+const SELECT_CLS = 'mt-1 block w-full rounded-xl border border-[#E5E7E9] px-3 py-2 text-sm bg-white transition-all duration-200 hover:border-[#f3c6c1] focus:outline-none focus:ring-2 focus:ring-[#FADBD8] focus:border-[#C0392B]'
+const DATE_INPUT_CLS = 'mt-1 h-9 text-sm rounded-xl transition-all duration-200 hover:border-[#f3c6c1] focus:ring-[#FADBD8] focus:border-[#C0392B]'
+
+const PERIOD_PRESETS = [
+  { key: 'weekly',    label: 'Weekly Report'    },
+  { key: 'monthly',   label: 'Monthly Report'   },
+  { key: 'quarterly', label: 'Quarterly Report' },
+  { key: 'yearly',    label: 'Yearly Report'    },
+]
+
+const MONTH_NAMES = [
+  'January', 'February', 'March',     'April',   'May',      'June',
+  'July',    'August',   'September', 'October', 'November', 'December',
+]
+
+// Years selectable in the Year dropdown — the current year back through the
+// last decade. No future years: a report can't cover a year that hasn't
+// happened yet.
+const CURRENT_YEAR   = new Date().getFullYear()
+const YEAR_OPTIONS   = Array.from({ length: 11 }, (_, i) => CURRENT_YEAR - i)
+
+const QUARTERS = [
+  { value: 1, label: 'Q1 (Jan – Mar)' },
+  { value: 2, label: 'Q2 (Apr – Jun)' },
+  { value: 3, label: 'Q3 (Jul – Sep)' },
+  { value: 4, label: 'Q4 (Oct – Dec)' },
+]
+
+// Each period type resolves its own picker values ({ week } | { month, year } |
+// { quarter, year } | { year }) into an actual [from, to] date range.
+const rangeForWeek = (weekValue) => {
+  const [isoYear, isoWeek] = weekValue.split('-W').map(Number)
+  let d = setISOWeekYear(new Date(), isoYear)
+  d = setISOWeek(d, isoWeek)
+  return [startOfISOWeek(d), endOfISOWeek(d)]
+}
+const rangeForMonth   = (month, year)   => { const d = new Date(year, month - 1, 1);        return [startOfMonth(d),   endOfMonth(d)] }
+const rangeForQuarter = (quarter, year) => { const d = new Date(year, (quarter - 1) * 3, 1); return [startOfQuarter(d), endOfQuarter(d)] }
+const rangeForYear    = (year)          => { const d = new Date(year, 0, 1);                return [startOfYear(d),    endOfYear(d)] }
+
+const currentIsoWeekValue = (d) => format(d, "RRRR-'W'II")
 
 export default function AdminAnalytics() {
-  const [filters, setFilters] = useState({
-    date_from: '', date_to: '', facility_id: '', status: 'all', payment_status: 'all',
+  // Which report period is active. Defaults to "weekly" (the current week) so the
+  // page opens already scoped instead of an empty/all-time custom range. Each period
+  // type shows its own natural picker instead of a generic date range — Weekly gets
+  // a week picker, Monthly gets Month+Year, Quarterly gets Quarter+Year, Yearly gets
+  // just Year — and picking a value immediately resolves it into the actual date range.
+  const [activePeriod, setActivePeriod] = useState('weekly')
+  const [weekValue, setWeekValue] = useState(() => currentIsoWeekValue(new Date()))
+  const [month,      setMonth]    = useState(() => new Date().getMonth() + 1)
+  const [quarter,    setQuarter]  = useState(() => Math.floor(new Date().getMonth() / 3) + 1)
+  const [year,       setYear]     = useState(() => new Date().getFullYear())
+
+  const [filters, setFilters] = useState(() => {
+    const [from, to] = rangeForWeek(currentIsoWeekValue(new Date()))
+    return {
+      date_from: format(from, 'yyyy-MM-dd'), date_to: format(to, 'yyyy-MM-dd'),
+      facility_id: '', status: 'all', payment_status: 'all',
+    }
   })
   const [page, setPage] = useState(1)
   const [downloadingPdf, setDownloadingPdf] = useState(false)
@@ -68,6 +127,45 @@ export default function AdminAnalytics() {
   })
 
   const setFilter = (k, v) => { setFilters(f => ({ ...f, [k]: v })); setPage(1) }
+
+  // Applies a resolved [from, to] range to the report filters.
+  const applyRange = ([from, to]) => {
+    setFilters(f => ({ ...f, date_from: format(from, 'yyyy-MM-dd'), date_to: format(to, 'yyyy-MM-dd') }))
+    setPage(1)
+  }
+
+  const selectPeriod = (key) => {
+    // Clicking the already-active preset toggles it off, back to a custom range.
+    if (activePeriod === key) {
+      setActivePeriod(null)
+      setFilters(f => ({ ...f, date_from: '', date_to: '' }))
+      setPage(1)
+      return
+    }
+    setActivePeriod(key)
+    // Reset that period's picker to "now" and apply immediately, using local values
+    // rather than the (not-yet-updated) state so this doesn't apply stale numbers.
+    const now = new Date()
+    const w = currentIsoWeekValue(now)
+    const m = now.getMonth() + 1
+    const q = Math.floor(now.getMonth() / 3) + 1
+    const y = now.getFullYear()
+    setWeekValue(w); setMonth(m); setQuarter(q); setYear(y)
+    if (key === 'weekly')    applyRange(rangeForWeek(w))
+    if (key === 'monthly')   applyRange(rangeForMonth(m, y))
+    if (key === 'quarterly') applyRange(rangeForQuarter(q, y))
+    if (key === 'yearly')    applyRange(rangeForYear(y))
+  }
+
+  const changeWeek    = (w) => { setWeekValue(w); applyRange(rangeForWeek(w)) }
+  const changeMonth   = (m) => { setMonth(m);      applyRange(rangeForMonth(m, year)) }
+  const changeQuarter = (q) => { setQuarter(q);    applyRange(rangeForQuarter(q, year)) }
+  const changeYear    = (y) => {
+    setYear(y)
+    if (activePeriod === 'monthly')   applyRange(rangeForMonth(month, y))
+    if (activePeriod === 'quarterly') applyRange(rangeForQuarter(quarter, y))
+    if (activePeriod === 'yearly')    applyRange(rangeForYear(y))
+  }
 
   const downloadPdf = () => {
     const pdfParams = { ...reportParams }
@@ -271,26 +369,102 @@ export default function AdminAnalytics() {
             size="sm"
             loading={downloadingPdf}
             onClick={downloadPdf}
-            className="flex items-center gap-2 self-start sm:self-auto"
+            className="flex items-center gap-2 self-start sm:self-auto bg-white text-[#C0392B] border-[#C0392B] rounded-full hover:bg-[#C0392B] hover:text-white transition-colors duration-200"
           >
             {!downloadingPdf && <Download className="h-4 w-4" />} {downloadingPdf ? 'Generating…' : 'Export PDF'}
           </Button>
         </div>
 
-        {/* Filters */}
-        <div className="px-6 py-4 border-b border-[#E5E7E9] bg-[#FADBD8]/20">
-          <p className="text-xs font-semibold text-[#1C2833] uppercase tracking-wide mb-3">Filters</p>
+        {/* Filters — plain white, no tinted container; the period switcher reads as
+            a flat segmented control (active = white pill, inactive = plain text). */}
+        <div className="px-6 py-4 border-b border-[#E5E7E9]">
+          {/* Quick report periods — each one swaps the From/To range below for its own
+              natural picker (Week / Month+Year / Quarter+Year / Year). Click the
+              active one again to switch back to a custom From/To range. */}
+          <div className="inline-flex flex-wrap gap-1 p-1 rounded-full bg-[#F7F8F9] mb-4">
+            {PERIOD_PRESETS.map(p => (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => selectPeriod(p.key)}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ease-out ${
+                  activePeriod === p.key
+                    ? 'bg-white text-[#C0392B] shadow-sm'
+                    : 'text-[#717D7E] hover:text-[#1C2833]'
+                }`}
+              >
+                <CalendarRange className="h-3.5 w-3.5" /> {p.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div>
-              <Label className="text-xs text-[#1C2833]">From</Label>
-              <Input type="date" value={filters.date_from}
-                onChange={e => setFilter('date_from', e.target.value)} className="mt-1 h-9 text-sm" />
-            </div>
-            <div>
-              <Label className="text-xs text-[#1C2833]">To</Label>
-              <Input type="date" value={filters.date_to}
-                onChange={e => setFilter('date_to', e.target.value)} className="mt-1 h-9 text-sm" />
-            </div>
+            {activePeriod === 'weekly' && (
+              <div>
+                <Label className="text-xs text-[#1C2833]">Week</Label>
+                <Input type="week" value={weekValue}
+                  onChange={e => changeWeek(e.target.value)} className={DATE_INPUT_CLS} />
+              </div>
+            )}
+
+            {activePeriod === 'monthly' && (
+              <>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">Month</Label>
+                  <select value={month} onChange={e => changeMonth(Number(e.target.value))} className={SELECT_CLS}>
+                    {MONTH_NAMES.map((name, i) => <option key={name} value={i + 1}>{name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">Year</Label>
+                  <select value={year} onChange={e => changeYear(Number(e.target.value))} className={SELECT_CLS}>
+                    {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {activePeriod === 'quarterly' && (
+              <>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">Quarter</Label>
+                  <select value={quarter} onChange={e => changeQuarter(Number(e.target.value))} className={SELECT_CLS}>
+                    {QUARTERS.map(q => <option key={q.value} value={q.value}>{q.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">Year</Label>
+                  <select value={year} onChange={e => changeYear(Number(e.target.value))} className={SELECT_CLS}>
+                    {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
+              </>
+            )}
+
+            {activePeriod === 'yearly' && (
+              <div>
+                <Label className="text-xs text-[#1C2833]">Year</Label>
+                <select value={year} onChange={e => changeYear(Number(e.target.value))} className={SELECT_CLS}>
+                  {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            )}
+
+            {!activePeriod && (
+              <>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">From</Label>
+                  <Input type="date" value={filters.date_from}
+                    onChange={e => setFilter('date_from', e.target.value)} className={DATE_INPUT_CLS} />
+                </div>
+                <div>
+                  <Label className="text-xs text-[#1C2833]">To</Label>
+                  <Input type="date" value={filters.date_to}
+                    onChange={e => setFilter('date_to', e.target.value)} className={DATE_INPUT_CLS} />
+                </div>
+              </>
+            )}
+
             <div>
               <Label className="text-xs text-[#1C2833]">Facility</Label>
               <select value={filters.facility_id} onChange={e => setFilter('facility_id', e.target.value)} className={SELECT_CLS}>

@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
-import { Banknote, CheckCircle2, Clock, CreditCard, XCircle } from 'lucide-react'
+import { Banknote, CheckCircle2, Clock, CreditCard, XCircle, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
 import api from '@/api/axios'
 import { Card, CardContent } from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
+import Button from '@/components/ui/Button'
 import Skeleton from '@/components/ui/Skeleton'
 import SearchAutocomplete from '@/components/ui/SearchAutocomplete'
+import ReceiptModal from '@/components/ReceiptModal'
 
 const STATUS_BORDER = {
   paid:      'border-l-[#27AE60]',
@@ -38,13 +40,25 @@ function initials(name = '') {
 export default function AdminPayments() {
   const [search, setSearch]       = useState('')
   const [statusFilter, setStatus] = useState('all')
+  const [page, setPage]           = useState(1)
+  const [receiptId, setReceiptId] = useState(null)
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['admin', 'payments'],
-    queryFn: () => api.get('/admin/payments').then(r => r.data),
+  const params = {
+    page,
+    ...(statusFilter !== 'all' && { status: statusFilter }),
+    ...(search && { search }),
+  }
+
+  const { data, isLoading, isFetching } = useQuery({
+    queryKey: ['admin', 'payments', params],
+    queryFn: () => api.get('/admin/payments', { params }).then(r => r.data),
+    placeholderData: prev => prev,
   })
 
-  const payments = data?.data ?? data ?? []
+  const payments = data?.data ?? []
+  const lastPage  = data?.last_page    ?? 1
+  const curPage   = data?.current_page ?? 1
+  const total     = data?.total        ?? 0
 
   const searchSuggestions = useMemo(() => [
     ...payments.map(p => p.receipt_number),
@@ -52,23 +66,17 @@ export default function AdminPayments() {
     ...payments.map(p => p.reservation?.facility?.name),
   ], [payments])
 
-  const filtered = payments.filter(p => {
-    const matchStatus = statusFilter === 'all' || p.status === statusFilter
-    const q = search.toLowerCase()
-    const matchSearch = !q || (
-      p.receipt_number?.toLowerCase().includes(q) ||
-      p.reservation?.user?.full_name?.toLowerCase().includes(q) ||
-      p.reservation?.facility?.name?.toLowerCase().includes(q)
-    )
-    return matchStatus && matchSearch
-  })
+  const changeSearch = val => { setSearch(val); setPage(1) }
+  const changeStatus = val => { setStatus(val);  setPage(1) }
 
-  const totalPaid    = payments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0)
-  const countPaid      = payments.filter(p => p.status === 'paid').length
-  const countPending   = payments.filter(p => p.status === 'pending').length
-  const countFailed    = payments.filter(p => p.status === 'failed').length
-  const countCancelled = payments.filter(p => p.status === 'cancelled').length
-  const countRejected  = payments.filter(p => p.status === 'rejected').length
+  // Stat-card totals come from the backend (data.counts) so they reflect every
+  // payment in the table, not just whichever page/filter is currently showing.
+  const totalPaid       = data?.counts?.total_collected ?? 0
+  const countPaid       = data?.counts?.paid            ?? 0
+  const countPending    = data?.counts?.pending          ?? 0
+  const countFailed     = data?.counts?.failed           ?? 0
+  const countCancelled  = data?.counts?.cancelled        ?? 0
+  const countRejected   = data?.counts?.rejected         ?? 0
 
   if (isLoading) return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -116,7 +124,7 @@ export default function AdminPayments() {
           {['all', 'paid', 'pending', 'rejected', 'cancelled', 'failed'].map(s => (
             <button
               key={s}
-              onClick={() => setStatus(s)}
+              onClick={() => changeStatus(s)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize transition-colors ${
                 statusFilter === s
                   ? 'bg-[#C0392B] text-white border-[#C0392B]'
@@ -129,7 +137,7 @@ export default function AdminPayments() {
         </div>
         <SearchAutocomplete
           value={search}
-          onChange={setSearch}
+          onChange={changeSearch}
           suggestions={searchSuggestions}
           placeholder="Search receipt, client, or facility…"
           wrapperClassName="sm:ml-auto relative"
@@ -141,13 +149,13 @@ export default function AdminPayments() {
       {/* Payment list */}
       <Card>
         <CardContent className="p-0">
-          {filtered.length === 0 ? (
+          {payments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-[#1C2833] gap-2">
               <Banknote className="h-10 w-10 opacity-30" />
               <p className="text-sm">No payments found.</p>
             </div>
           ) : (
-            <div>
+            <div className={`transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
               {/* Column headers */}
               <div className="grid grid-cols-12 px-5 py-3 bg-[#FADBD8]/40 text-xs font-semibold text-[#96281B] uppercase tracking-wide border-b border-[#E5E7E9]">
                 <div className="col-span-4">Client / Facility</div>
@@ -159,7 +167,7 @@ export default function AdminPayments() {
               </div>
 
               <div className="divide-y divide-[#E5E7E9]">
-                {filtered.map(p => {
+                {payments.map(p => {
                   const name   = p.reservation?.user?.full_name ?? ''
                   const border = STATUS_BORDER[p.status] ?? 'border-l-gray-300'
                   const method = METHOD_LABEL[p.payment_method] ?? p.payment_method ?? '—'
@@ -182,7 +190,17 @@ export default function AdminPayments() {
 
                       {/* Receipt */}
                       <div className="col-span-2 min-w-0">
-                        <p className="text-xs font-mono text-[#1C2833] truncate">{p.receipt_number ?? '—'}</p>
+                        {p.status === 'paid' && p.receipt_number ? (
+                          <button
+                            onClick={() => setReceiptId(p.reservation_id)}
+                            className="flex items-center gap-1 text-xs font-mono text-[#2980B9] hover:underline truncate"
+                            title="View receipt"
+                          >
+                            <Eye className="h-3 w-3 shrink-0" /> {p.receipt_number}
+                          </button>
+                        ) : (
+                          <p className="text-xs font-mono text-[#1C2833] truncate">{p.receipt_number ?? '—'}</p>
+                        )}
                       </div>
 
                       {/* Amount */}
@@ -215,8 +233,29 @@ export default function AdminPayments() {
               </div>
             </div>
           )}
+
+          {/* Pagination — always rendered (even for a single page) so the card's
+              footer stays put instead of appearing/disappearing as filters change
+              the result count. */}
+          <div className="flex items-center justify-between px-5 py-4 border-t border-[#E5E7E9]">
+            <p className="text-sm text-[#1C2833]">
+              Page {curPage} of {lastPage} · <span className="font-medium text-[#1C2833]">{total}</span> payments
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" disabled={curPage <= 1} onClick={() => setPage(p => p - 1)}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" disabled={curPage >= lastPage} onClick={() => setPage(p => p + 1)}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
+
+      {receiptId && (
+        <ReceiptModal reservationId={receiptId} onClose={() => setReceiptId(null)} />
+      )}
     </div>
   )
 }

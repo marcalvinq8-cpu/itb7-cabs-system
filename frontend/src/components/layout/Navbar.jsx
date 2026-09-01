@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Bell, ChevronRight, Menu } from 'lucide-react'
+import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useNotifications } from '@/hooks/useNotifications'
 import { cn } from '@/lib/utils'
@@ -84,8 +84,8 @@ function getRoute(n, role) {
   }
 }
 
-export default function Navbar({ onMobileMenu }) {
-  const { user } = useAuth()
+export default function Navbar() {
+  const { user, logout } = useAuth()
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications()
   const navigate = useNavigate()
   const [notifOpen, setNotifOpen] = useState(false)
@@ -94,6 +94,11 @@ export default function Navbar({ onMobileMenu }) {
     markRead(n.id)
     setNotifOpen(false)
     navigate(getRoute(n, user?.role))
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
   }
 
   const initials  = user?.full_name?.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) ?? '?'
@@ -106,14 +111,6 @@ export default function Navbar({ onMobileMenu }) {
     <div>
       {/* ── Row 1: page title + right controls ── */}
       <div className="h-16 flex items-center gap-3 px-5">
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden p-1.5 rounded-lg text-[#1C2833] hover:bg-[#FADBD8]"
-          onClick={onMobileMenu}
-        >
-          <Menu className="h-5 w-5" />
-        </button>
 
         {/* Page title (desktop) */}
         <h2 className="hidden lg:block text-base font-bold text-[#1C2833]">{pageLabel}</h2>
@@ -209,11 +206,21 @@ export default function Navbar({ onMobileMenu }) {
             <p className="text-[10px] text-[#1C2833]">{roleLabel}</p>
           </div>
         </Link>
+
+        {/* Logout */}
+        <button
+          onClick={handleLogout}
+          title="Log out"
+          className="flex items-center gap-1.5 p-2 rounded-lg text-[#1C2833] hover:text-[#C0392B] hover:bg-[#FADBD8] transition-colors"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="hidden sm:inline text-sm font-medium">Log out</span>
+        </button>
       </div>
 
-      {/* ── Row 2: nav tabs (desktop only) ── */}
+      {/* ── Row 2: nav tabs (all screen sizes now that there's no sidebar) ── */}
       <nav
-        className="hidden lg:flex border-t border-[#FADBD8] bg-[#FADBD8]/50 px-5 overflow-x-auto"
+        className="flex border-t border-[#FADBD8] bg-[#FADBD8]/50 px-5 overflow-x-auto"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
         {navItems.map(({ to, label }) => (
