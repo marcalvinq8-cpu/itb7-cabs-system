@@ -148,6 +148,14 @@ class AnalyticsController extends Controller
                 ? Facility::find($request->facility_id)?->name
                 : null;
 
+            // Embedded as a base64 data URI rather than a file:// or http:// <img src>
+            // — dompdf resolves those against the server's remote-fetch settings, which
+            // is fragile; a data URI always works regardless of that config.
+            $logoPath = resource_path('images/logoCabs.png');
+            $logoBase64 = is_file($logoPath)
+                ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+                : null;
+
             $pdf = Pdf::loadView('pdf.report', [
                 'reservations'  => $reservations,
                 'totalMatching' => $totalMatching,
@@ -155,6 +163,7 @@ class AnalyticsController extends Controller
                 'generatedAt'   => now(),
                 'totalRevenue'  => $totalRevenue,
                 'statusCounts'  => $statusCounts,
+                'logoBase64'    => $logoBase64,
                 'filters'       => [
                     'date_from'      => $request->query('date_from'),
                     'date_to'        => $request->query('date_to'),

@@ -62,11 +62,8 @@ export default function GuestPage() {
       <nav className="sticky top-0 z-50 bg-white border-b border-[#E5E7E9] shadow-sm">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/cabuyao-icon.png" alt="CABS" className="w-8 h-8 object-contain" />
-            <div className="leading-tight">
-              <p className="font-black text-[#C0392B] text-sm leading-none">CABS</p>
-              <p className="text-[10px] text-[#1C2833] leading-none">Reservation System</p>
-            </div>
+            <img src="/logoCabs.png" alt="CABS" className="h-9 w-auto object-contain" />
+            <p className="text-[10px] text-[#1C2833] leading-none">Reservation System</p>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login"
@@ -88,8 +85,8 @@ export default function GuestPage() {
       >
         <div className="absolute inset-0 bg-[#C0392B]/75" />
         <div className="relative z-10 max-w-2xl mx-auto">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white rounded-2xl mb-6 shadow-xl p-2 border border-white/20">
-            <img src="/cabuyao-icon.png" alt="CABS" className="w-full h-full object-contain" />
+          <div className="inline-flex items-center justify-center w-40 h-24 bg-white rounded-2xl mb-6 shadow-xl p-3 border border-white/20">
+            <img src="/logoCabs.png" alt="CABS — Cabuyao Athletes Basic School" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-4xl sm:text-5xl font-black text-white leading-tight mb-4">
             Reserve CABS<br />Sports Facilities Online
@@ -374,7 +371,7 @@ export default function GuestPage() {
       <footer className="bg-white border-t border-[#E5E7E9] px-6 py-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="/cabuyao-icon.png" alt="CABS" className="w-7 h-7 object-contain" />
+            <img src="/logoCabs.png" alt="CABS" className="h-9 w-auto object-contain" />
             <div>
               <p className="font-bold text-[#C0392B] text-sm">CABS</p>
               <p className="text-[10px] text-[#1C2833]">Cabuyao Athletes Basic School</p>

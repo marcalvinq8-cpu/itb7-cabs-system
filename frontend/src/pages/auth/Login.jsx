@@ -68,11 +68,9 @@ export default function Login() {
           <div className="absolute top-1/2 right-4 w-4 h-4 bg-[#C0392B] rounded-full opacity-20" />
 
           <div className="relative z-10 text-center">
-            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg p-1.5 border border-[#FADBD8]">
-              <img src="/cabuyao-icon.png" alt="Cabuyao Seal" className="w-full h-full object-contain" />
+            <div className="w-40 h-24 bg-white rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg p-2.5 border border-[#FADBD8]">
+              <img src="/logoCabs.png" alt="CABS — Cabuyao Athletes Basic School" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-3xl font-black text-white mb-2">CABS</h1>
-            <p className="text-white/80 text-sm font-medium mb-1">Cabuyao Athletes Basic School</p>
             <p className="text-white/60 text-xs max-w-[200px] mx-auto leading-relaxed">
               Online facility reservation — book sports facilities anytime, anywhere.
             </p>
@@ -93,10 +91,9 @@ export default function Login() {
 
             {/* Mobile logo */}
             <div className="md:hidden text-center mb-6">
-              <div className="w-14 h-14 bg-[#FADBD8] rounded-xl flex items-center justify-center mx-auto mb-3 shadow p-1 border border-[#FADBD8]">
-                <img src="/cabuyao-icon.png" alt="Cabuyao Seal" className="w-full h-full object-contain" />
+              <div className="w-28 h-16 bg-[#FADBD8] rounded-xl flex items-center justify-center mx-auto mb-3 shadow p-1.5 border border-[#FADBD8]">
+                <img src="/logoCabs.png" alt="CABS — Cabuyao Athletes Basic School" className="w-full h-full object-contain" />
               </div>
-              <h1 className="text-lg font-bold text-[#1C2833]">CABS</h1>
             </div>
 
             <h2 className="text-2xl font-bold text-[#1C2833] mb-1">Welcome back</h2>

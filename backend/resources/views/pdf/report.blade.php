@@ -14,6 +14,7 @@
 
         /* Header — logo/wordmark centered, stacked */
         .header { text-align: center; border-bottom: 3px solid #C0392B; padding-bottom: 16px; margin-bottom: 16px; }
+        .header img.logo { height: 64px; }
         .header h1 { font-size: 48px; font-weight: 900; color: #C0392B; letter-spacing: 4px; line-height: 1; }
         .header p  { font-size: 10px; color: #555; margin-top: 3px; }
         .header .badge { display: inline-block; background: #C0392B; color: #fff; font-size: 10px; font-weight: 700; padding: 4px 14px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
@@ -69,8 +70,11 @@
 
     {{-- Header — centered logo/wordmark --}}
     <div class="header">
-        <h1>CABS</h1>
-        <p>Cabuyao Athletes Basic School</p>
+        @if($logoBase64)
+            <img src="{{ $logoBase64 }}" alt="CABS" class="logo">
+        @else
+            <h1>CABS</h1>
+        @endif
         <p>Cabuyao, Laguna, Philippines</p>
         <div class="badge">Reservation Report</div>
         <div class="generated">Generated: {{ $generatedAt->format('F d, Y g:i A') }}</div>
