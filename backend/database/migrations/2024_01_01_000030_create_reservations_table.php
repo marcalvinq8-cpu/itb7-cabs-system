@@ -19,7 +19,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->enum('status', ['pending', 'approved', 'rejected', 'cancelled', 'confirmed', 'completed'])->default('pending');
             $table->text('admin_note')->nullable();
-            $table->bigInteger('reviewed_by')->nullable();
+            $table->unsignedBigInteger('reviewed_by')->nullable();
             $table->foreign('reviewed_by')->references('id')->on('users')->nullOnDelete();
             $table->timestamp('reviewed_at')->nullable();
             $table->json('selected_amenities')->nullable();
