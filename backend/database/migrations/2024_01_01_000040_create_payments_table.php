@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->decimal('amount', 10, 2);
             $table->string('currency', 3)->default('PHP');
-            $table->enum('status', ['pending', 'paid', 'failed', 'expired'])->default('pending');
+            $table->string('status')->default('pending');
             $table->string('payment_method', 50)->nullable();
             $table->string('paymongo_payment_intent_id')->nullable();
             $table->string('paymongo_payment_method_id')->nullable();
