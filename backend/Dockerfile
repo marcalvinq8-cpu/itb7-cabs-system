@@ -29,5 +29,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 80
 
-# Auto-run migrations & seeders upon container start
-CMD php artisan migrate:fresh --seed --force && apache2-foreground
+# Run migrations safely before starting Apache
+CMD php artisan migrate --force && apache2-foreground
