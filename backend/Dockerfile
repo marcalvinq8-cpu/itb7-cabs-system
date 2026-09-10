@@ -13,7 +13,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy project files
 COPY . /var/www
 
-# Install dependencies nang mabilis (--no-dev)
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Storage & Cache permissions
@@ -21,5 +21,5 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 8000
 
-# Entrypoint script
-CMD php artisan config:clear && php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=8000
+# Tatanggalin ang auto-migrate:fresh para maiwasan ang race condition sa database
+CMD php artisan config:clear && php artisan serve --host=0.0.0.0 --port=8000
