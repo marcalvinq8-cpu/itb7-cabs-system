@@ -1,36 +1,25 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-# Install system dependencies and Postgres library
+# Install system dependencies & PHP extensions for MySQL
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    zip unzip git \
-    && docker-php-ext-install pdo pdo_pgsql
+    git unzip libpng-dev libonig-dev libxml2-dev zip curl \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy backend code
-COPY . .
+WORKDIR /var/www
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Copy project files
+COPY . /var/www
+
+# Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Configure Apache document root to Laravel public directory
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-available/*.conf
+# Storage & Cache permissions
+RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-# Fix storage permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+EXPOSE 8000
 
-EXPOSE 80
-
-# Run migrations safely before starting Apache
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-CMD ["entrypoint.sh"]
+# Entrypoint script to run migrations and start Laravel
+CMD php artisan config:clear && php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=8000
