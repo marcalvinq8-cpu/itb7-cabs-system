@@ -9,6 +9,7 @@ use App\Models\Reservation;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon; // Idinagdag para masigurong ma-format nang maayos ang dates
 
 class FacilityController extends Controller
 {
@@ -47,7 +48,8 @@ class FacilityController extends Controller
             ->orderBy('start_time')
             ->get()
             ->map(fn ($s) => [
-                'reservation_date' => $s->reservation_date->format('Y-m-d'),
+                // Sinisiguro natin na gagana kahit string o Carbon object man ang reservation_date
+                'reservation_date' => Carbon::parse($s->reservation_date)->format('Y-m-d'),
                 'start_time'       => substr($s->start_time, 0, 5),
                 'end_time'         => substr($s->end_time,   0, 5),
                 'status'           => $s->status,
@@ -82,17 +84,13 @@ class FacilityController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name'          => ['required', 'string', 'max:255'],
-            'description'   => ['required', 'string'],
-            'location'      => ['required', 'string', 'max:255'],
-            'capacity'      => ['required', 'integer', 'min:1'],
-            'price_per_hour'=> ['required', 'numeric', 'min:0'],
-            'status'        => ['in:available,under_maintenance,unavailable,closed'],
-            // Laravel's 'image' rule doesn't accept SVG in this version even though
-            // it's a perfectly valid image (fileinfo correctly detects it as
-            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
-            // aren't rejected with a misleading "must be an image" error.
-            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            'name'           => ['required', 'string', 'max:255'],
+            'description'    => ['required', 'string'],
+            'location'       => ['required', 'string', 'max:255'],
+            'capacity'       => ['required', 'integer', 'min:1'],
+            'price_per_hour' => ['required', 'numeric', 'min:0'],
+            'status'         => ['in:available,under_maintenance,unavailable,closed'],
+            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         $imagePath = null;
@@ -118,17 +116,13 @@ class FacilityController extends Controller
         $facility = Facility::findOrFail($id);
 
         $validated = $request->validate([
-            'name'          => ['sometimes', 'string', 'max:255'],
-            'description'   => ['sometimes', 'string'],
-            'location'      => ['sometimes', 'string', 'max:255'],
-            'capacity'      => ['sometimes', 'integer', 'min:1'],
-            'price_per_hour'=> ['sometimes', 'numeric', 'min:0'],
-            'status'        => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
-            // Laravel's 'image' rule doesn't accept SVG in this version even though
-            // it's a perfectly valid image (fileinfo correctly detects it as
-            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
-            // aren't rejected with a misleading "must be an image" error.
-            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            'name'           => ['sometimes', 'string', 'max:255'],
+            'description'    => ['sometimes', 'string'],
+            'location'       => ['sometimes', 'string', 'max:255'],
+            'capacity'       => ['sometimes', 'integer', 'min:1'],
+            'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
+            'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
+            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -187,11 +181,14 @@ class FacilityController extends Controller
                 ->get();
 
             foreach ($affectedReservations as $reservation) {
+                // Sinisigurong ligtas ang pag-format ng petsa gamit ang Carbon::parse
+                $formattedDate = Carbon::parse($reservation->reservation_date)->format('M d, Y');
+
                 NotificationService::notifyUser(
                     $reservation->user,
                     'facility_maintenance',
                     'Facility Under Maintenance',
-                    "The {$facility->name} has been set to {$validated['status']}. Your reservation on {$reservation->reservation_date->format('M d, Y')} may be affected. Please contact us for assistance.",
+                    "The {$facility->name} has been set to {$validated['status']}. Your reservation on {$formattedDate} may be affected. Please contact us for assistance.",
                     $reservation->id
                 );
             }
