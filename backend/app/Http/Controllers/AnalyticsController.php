@@ -61,8 +61,8 @@ class AnalyticsController extends Controller
         $rows = Payment::where('status', 'paid')
             ->where('paid_at', '>=', now()->subMonths(11)->startOfMonth())
             ->select(
-                DB::raw("DATE_FORMAT(paid_at, '%Y-%m') as month_key"),
-                DB::raw("DATE_FORMAT(paid_at, '%b %Y')  as month_label"),
+                DB::raw("TO_CHAR(paid_at, 'YYYY-MM') as month_key"),
+                DB::raw("TO_CHAR(paid_at, 'Mon YYYY') as month_label"),
                 DB::raw('SUM(amount) as revenue')
             )
             ->groupBy('month_key', 'month_label')
@@ -92,10 +92,10 @@ class AnalyticsController extends Controller
 
     public function bookingTrends()
     {
-        $dayMap = [1 => 'Sun', 2 => 'Mon', 3 => 'Tue', 4 => 'Wed', 5 => 'Thu', 6 => 'Fri', 7 => 'Sat'];
+        $dayMap = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
 
         $rows = Reservation::select(
-                DB::raw('DAYOFWEEK(reservation_date) as day_num'),
+                DB::raw('EXTRACT(DOW FROM reservation_date) as day_num'),
                 DB::raw('COUNT(*) as count')
             )
             ->where('reservation_date', '>=', now()->subDays(90)->toDateString())
@@ -103,7 +103,7 @@ class AnalyticsController extends Controller
             ->orderBy('day_num')
             ->get()
             ->map(fn($r) => [
-                'day'   => $dayMap[$r->day_num] ?? 'Unknown',
+                'day'   => $dayMap[(int) $r->day_num] ?? 'Unknown',
                 'count' => $r->count,
             ]);
 
@@ -121,19 +121,12 @@ class AnalyticsController extends Controller
             ->orderByDesc('reservation_date');
 
         if ($request->query('format') === 'pdf') {
-            // dompdf keeps a full in-memory layout tree per table, which grows steeply
-            // with row count — cap how many rows go into one PDF (the on-screen/CSV-era
-            // paths are unaffected) and tell the admin to narrow filters for the rest.
             $maxRows = 1000;
 
             $totalMatching = (clone $query)->count();
             $reservations  = $query->limit($maxRows)->get();
             $truncated     = $totalMatching > $reservations->count();
 
-            // Small safety margin on top of the row cap above — chunked tables in the
-            // template already keep this well under the default 512M limit. Rendering
-            // ~1000 rows can take upwards of 30s, so also guard against a stricter
-            // hosting default for max_execution_time than this project's local php.ini.
             ini_set('memory_limit', '768M');
             set_time_limit(120);
 
@@ -148,9 +141,6 @@ class AnalyticsController extends Controller
                 ? Facility::find($request->facility_id)?->name
                 : null;
 
-            // Embedded as a base64 data URI rather than a file:// or http:// <img src>
-            // — dompdf resolves those against the server's remote-fetch settings, which
-            // is fragile; a data URI always works regardless of that config.
             $logoPath = resource_path('images/logoCabs.png');
             $logoBase64 = is_file($logoPath)
                 ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
