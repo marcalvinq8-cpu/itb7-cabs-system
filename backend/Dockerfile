@@ -28,3 +28,6 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/conf-ava
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
+
+# Auto-run migrations & seeders upon container start
+CMD php artisan migrate:fresh --seed --force && apache2-foreground
