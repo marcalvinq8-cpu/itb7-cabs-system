@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class MassClientSeeder extends Seeder
 {
@@ -25,7 +26,7 @@ class MassClientSeeder extends Seeder
 
         // Hashing is deliberately slow (bcrypt) — every seeded account shares the same
         // demo password, so hash it once instead of re-hashing per row.
-        $password = 'Client@1234';
+        $password = Hash::make('Client@1234');
 
         for ($i = 1; $i <= $count; $i++) {
             $name  = fake()->unique()->name();

@@ -24,7 +24,7 @@ class AuthController extends Controller
         $user = User::create([
             'full_name'      => $validated['full_name'],
             'email'          => $validated['email'],
-            'password'       => $validated['password'],
+            'password'       => Hash::make($validated['password']),
             'age'            => $validated['age'] ?? null,
             'gender'         => $validated['gender'] ?? null,
             'address'        => $validated['address'] ?? null,
@@ -95,7 +95,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Current password is incorrect.'], 422);
         }
 
-        $user->update(['password' => $request->password]);
+        $user->update(['password' => Hash::make($request->password)]);
 
         return response()->json(['message' => 'Password changed successfully.']);
     }

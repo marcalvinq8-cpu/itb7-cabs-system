@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class ClientSeeder extends Seeder
 {
@@ -13,7 +14,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Juan dela Cruz',
                 'email'          => 'juan@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 22,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Sala, Cabuyao, Laguna',
@@ -24,7 +25,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Maria Santos',
                 'email'          => 'maria@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 25,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Mamatid, Cabuyao, Laguna',
@@ -35,7 +36,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Pedro Reyes',
                 'email'          => 'pedro@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 30,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Baclaran, Cabuyao, Laguna',
@@ -46,7 +47,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Ana Reyes',
                 'email'          => 'ana@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 23,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Pittland, Cabuyao, Laguna',
@@ -57,7 +58,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Carlo Mendoza',
                 'email'          => 'carlo@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 27,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Diezmo, Cabuyao, Laguna',
@@ -68,7 +69,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Sofia Lim',
                 'email'          => 'sofia@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 21,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Banay-Banay, Cabuyao, Laguna',
@@ -79,7 +80,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Mark Flores',
                 'email'          => 'mark@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 31,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Butong, Cabuyao, Laguna',
@@ -90,7 +91,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Jasmine Cruz',
                 'email'          => 'jasmine@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 26,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Marinig, Cabuyao, Laguna',
@@ -101,7 +102,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Ryan Bautista',
                 'email'          => 'ryan@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 24,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Niugan, Cabuyao, Laguna',
@@ -112,7 +113,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Camille Garcia',
                 'email'          => 'camille@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 29,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Sala, Cabuyao, Laguna',
@@ -123,7 +124,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Lester Torres',
                 'email'          => 'lester@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 22,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Mamatid, Cabuyao, Laguna',
@@ -134,7 +135,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Alyssa Villanueva',
                 'email'          => 'alyssa@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 28,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Baclaran, Cabuyao, Laguna',
@@ -145,7 +146,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Dennis Aquino',
                 'email'          => 'dennis@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 33,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Pittland, Cabuyao, Laguna',
@@ -156,7 +157,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Kristine Ramos',
                 'email'          => 'kristine@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 25,
                 'gender'         => 'female',
                 'address'        => 'Brgy. Diezmo, Cabuyao, Laguna',
@@ -167,7 +168,7 @@ class ClientSeeder extends Seeder
             [
                 'full_name'      => 'Miguel Santos',
                 'email'          => 'miguel@example.com',
-                'password'       => 'Client@1234',
+                'password'       => Hash::make('Client@1234'),
                 'age'            => 20,
                 'gender'         => 'male',
                 'address'        => 'Brgy. Banay-Banay, Cabuyao, Laguna',
