@@ -1,10 +1,5 @@
-#!/bin/bash
-
-echo "Running migrations..."
-php artisan migrate --force
-
-echo "Running database seeders..."
-php artisan db:seed --force
-
-echo "Starting Apache..."
-exec apache2-foreground
+#!/bin/sh
+php artisan config:cache
+php artisan route:cache
+php artisan migrate --force --seed
+exec apache2-foreground # o kung ano man ang web server command mo
