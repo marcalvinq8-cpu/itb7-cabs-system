@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class UserController extends Controller
@@ -54,7 +53,7 @@ class UserController extends Controller
 
         $user = User::create([
             ...$validated,
-            'password'    => Hash::make($validated['password']),
+            'password'    => $validated['password'],
             'is_verified' => true,
         ]);
 
@@ -77,13 +76,14 @@ class UserController extends Controller
             'password'       => ['nullable', Password::min(8)],
         ]);
 
-        if (!empty($validated['password'])) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
+        $newPassword = $validated['password'] ?? null;
+        unset($validated['password']);
 
         $user->update($validated);
+
+        if ($newPassword !== null) {
+            $user->update(['password' => $newPassword]);
+        }
 
         return response()->json($user->fresh());
     }

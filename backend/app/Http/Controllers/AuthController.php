@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -25,7 +24,7 @@ class AuthController extends Controller
         $user = User::create([
             'full_name'      => $validated['full_name'],
             'email'          => $validated['email'],
-            'password'       => Hash::make($validated['password']),
+            'password'       => $validated['password'],
             'age'            => $validated['age'] ?? null,
             'gender'         => $validated['gender'] ?? null,
             'address'        => $validated['address'] ?? null,
@@ -96,7 +95,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Current password is incorrect.'], 422);
         }
 
-        $user->update(['password' => Hash::make($request->password)]);
+        $user->update(['password' => $request->password]);
 
         return response()->json(['message' => 'Password changed successfully.']);
     }

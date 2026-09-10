@@ -10,28 +10,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\ReceiptController;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Route;
-
-// Emergency Password Reset Route para sa Production
-Route::get('/force-reset-admin', function () {
-    $user = User::where('email', 'admin@cabs.edu.ph')->first();
-    
-    if (!$user) {
-        return response()->json(['status' => 'Admin user not found in DB']);
-    }
-
-    $user->password = Hash::make('Admin@1234');
-    $user->save();
-
-    return response()->json([
-        'status' => 'Password reset successful!',
-        'email' => $user->email,
-        'role' => $user->role,
-        'hash_check' => Hash::check('Admin@1234', $user->password)
-    ]);
-});
 
 // Public routes
 Route::middleware('throttle:6,1')->group(function () {

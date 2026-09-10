@@ -8,6 +8,7 @@ return [
 
     'allowed_origins' => [
         env('FRONTEND_URL', 'http://localhost:5173'),
+        'https://cabs-frontend.onrender.com',
         'https://itb7-cabs-system.vercel.app', 
     ],
 
