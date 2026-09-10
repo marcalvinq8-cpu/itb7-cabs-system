@@ -22,7 +22,7 @@ class MassClientSeeder extends Seeder
             'San Isidro', 'Barangay Uno',
         ];
 
-        $count = 1000;
+        $count = 20;
 
         // Hashing is deliberately slow (bcrypt) — every seeded account shares the same
         // demo password, so hash it once instead of re-hashing per row.

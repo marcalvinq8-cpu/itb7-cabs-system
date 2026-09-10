@@ -13,13 +13,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy project files
 COPY . /var/www
 
-# Isama ang dev dependencies (para gumana ang Faker sa Seeders)
-RUN composer install --optimize-autoloader
+# Install dependencies nang mabilis (--no-dev)
+RUN composer install --no-dev --optimize-autoloader
 
 # Storage & Cache permissions
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
 EXPOSE 8000
 
-# Entrypoint script: Gamitin ang migrate:fresh para maiwasan ang duplicate keys
+# Entrypoint script
 CMD php artisan config:clear && php artisan migrate:fresh --seed --force && php artisan serve --host=0.0.0.0 --port=8000
