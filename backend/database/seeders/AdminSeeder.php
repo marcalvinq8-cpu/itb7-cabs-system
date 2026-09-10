@@ -10,28 +10,32 @@ class AdminSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'full_name'      => 'CABS Administrator',
-            'email'          => 'admin@cabs.edu.ph',
-            'password'       => Hash::make('Admin@1234'),
-            'age'            => 35,
-            'gender'         => 'male',
-            'address'        => 'Cabuyao, Laguna',
-            'contact_number' => '09171234567',
-            'role'           => 'administrator',
-            'is_verified'    => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@cabs.edu.ph'],
+            [
+                'full_name'      => 'CABS Administrator',
+                'password'       => Hash::make('Admin@1234'),
+                'age'            => 35,
+                'gender'         => 'male',
+                'address'        => 'Cabuyao, Laguna',
+                'contact_number' => '09171234567',
+                'role'           => 'administrator',
+                'is_verified'    => true,
+            ]
+        );
 
-        User::create([
-            'full_name'      => 'CABS Staff',
-            'email'          => 'staff@cabs.edu.ph',
-            'password'       => Hash::make('Staff@1234'),
-            'age'            => 28,
-            'gender'         => 'female',
-            'address'        => 'Cabuyao, Laguna',
-            'contact_number' => '09179876543',
-            'role'           => 'staff',
-            'is_verified'    => true,
-        ]);
+        User::firstOrCreate(
+            ['email' => 'staff@cabs.edu.ph'],
+            [
+                'full_name'      => 'CABS Staff',
+                'password'       => Hash::make('Staff@1234'),
+                'age'            => 28,
+                'gender'         => 'female',
+                'address'        => 'Cabuyao, Laguna',
+                'contact_number' => '09179876543',
+                'role'           => 'staff',
+                'is_verified'    => true,
+            ]
+        );
     }
 }
