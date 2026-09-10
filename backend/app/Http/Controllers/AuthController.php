@@ -44,16 +44,20 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        $request->validate([
+        $credentials = $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        // Direct database lookup
+        $user = User::where('email', $credentials['email'])->first();
+
+        // Direct Hash checking
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
-        $user = Auth::user();
+        // Lumikha ng Sanctum Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
