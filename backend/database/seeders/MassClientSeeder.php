@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -16,6 +17,8 @@ class MassClientSeeder extends Seeder
      */
     public function run(): void
     {
+        $faker = Faker::create();
+
         $barangays = [
             'Sala', 'Mamatid', 'Baclaran', 'Pittland', 'Diezmo', 'Banay-Banay',
             'Butong', 'Marinig', 'Niugan', 'Bigaa', 'Casile', 'Gulod', 'Pulo',
@@ -29,16 +32,16 @@ class MassClientSeeder extends Seeder
         $password = Hash::make('Client@1234');
 
         for ($i = 1; $i <= $count; $i++) {
-            $name  = \fake()->unique()->name();
+            $name  = $faker->unique()->name();
             $email = 'client' . $i . '@example.com';
 
             User::firstOrCreate(['email' => $email], [
                 'full_name'      => $name,
                 'password'       => $password,
-                'age'            => \fake()->numberBetween(18, 55),
-                'gender'         => \fake()->randomElement(['male', 'female']),
-                'address'        => 'Brgy. ' . \fake()->randomElement($barangays) . ', Cabuyao, Laguna',
-                'contact_number' => '09' . \fake()->numerify('#########'),
+                'age'            => $faker->numberBetween(18, 55),
+                'gender'         => $faker->randomElement(['male', 'female']),
+                'address'        => 'Brgy. ' . $faker->randomElement($barangays) . ', Cabuyao, Laguna',
+                'contact_number' => '09' . $faker->numerify('#########'),
                 'role'           => 'client',
                 'is_verified'    => true,
             ]);
