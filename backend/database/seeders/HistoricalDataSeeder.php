@@ -196,10 +196,10 @@ class HistoricalDataSeeder extends Seeder
 
             $this->insertNotification($client->id, $resId2, $notifType2, $notifTitle2, $notifMsg2, $updated2->copy(), true);
 
-            // ── RESERVATION 3: Pending or Approved (upcoming) ───────────────────
+            // ── RESERVATION 3: Pending or Approved (current month) ─────────────
             $fac3        = $facilities[$facilityMap[$idx][2]];
-            $futureDays  = 5 + (($i * 3) % 180);
-            $date3       = Carbon::now()->addDays($futureDays)->toDateString();
+            $monthDay    = 2 + (($i * 3) % max(1, Carbon::now()->daysInMonth - 2));
+            $date3       = Carbon::now()->startOfMonth()->addDays($monthDay - 1)->toDateString();
             [$s3, $e3]   = $timeSlots[($idx + 10) % 15];
             $hours3      = abs(Carbon::createFromTimeString($e3)->diffInHours(Carbon::createFromTimeString($s3)));
             $amount3     = $hours3 * $fac3->price_per_hour;

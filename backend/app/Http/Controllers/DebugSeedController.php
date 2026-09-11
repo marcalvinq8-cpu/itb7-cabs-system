@@ -17,11 +17,14 @@ class DebugSeedController extends Controller
             404
         );
 
-        Artisan::call('db:seed', [
-            '--class' => 'Database\\Seeders\\FacilitySeeder',
+        Artisan::call('migrate:fresh', [
+            '--seed' => true,
             '--force' => true,
         ]);
 
-        return response()->json(['output' => Artisan::output()]);
+        return response()->json([
+            'message' => 'Database successfully reset and seeded.',
+            'output' => Artisan::output(),
+        ]);
     }
 }
