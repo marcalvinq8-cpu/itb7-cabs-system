@@ -2,7 +2,7 @@ import axios from 'axios'
 import { toast } from 'sonner'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://cabs-system-1.onrender.com/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api',
   withCredentials: true,
   timeout: 15_000,
   headers: {
