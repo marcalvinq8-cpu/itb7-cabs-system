@@ -61,8 +61,8 @@ class AnalyticsController extends Controller
         $rows = Payment::where('status', 'paid')
             ->where('paid_at', '>=', now()->subMonths(11)->startOfMonth())
             ->select(
-                DB::raw("TO_CHAR(paid_at, 'YYYY-MM') as month_key"),
-                DB::raw("TO_CHAR(paid_at, 'Mon YYYY') as month_label"),
+                DB::raw("DATE_FORMAT(paid_at, '%Y-%m') as month_key"),
+                DB::raw("DATE_FORMAT(paid_at, '%b %Y') as month_label"),
                 DB::raw('SUM(amount) as revenue')
             )
             ->groupBy('month_key', 'month_label')
@@ -95,7 +95,7 @@ class AnalyticsController extends Controller
         $dayMap = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
 
         $rows = Reservation::select(
-                DB::raw('EXTRACT(DOW FROM reservation_date) as day_num'),
+            DB::raw('(DAYOFWEEK(reservation_date) - 1) as day_num'),
                 DB::raw('COUNT(*) as count')
             )
             ->where('reservation_date', '>=', now()->subDays(90)->toDateString())
