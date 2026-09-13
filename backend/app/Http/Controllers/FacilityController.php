@@ -114,8 +114,6 @@ class FacilityController extends Controller
     {
         $facility = Facility::findOrFail($id);
 
-        // Kung ang 'image' key ay hindi totoong File object (halimbawa URL string mula sa frontend),
-        // tatanggalin ito sa request bago mag-validate para hindi mag-fail ang validation.
         if ($request->has('image') && !($request->file('image') instanceof \Illuminate\Http\UploadedFile)) {
             $request->request->remove('image');
         }
@@ -134,12 +132,13 @@ class FacilityController extends Controller
             if ($facility->image_path) {
                 Storage::disk('public')->delete($facility->image_path);
             }
-            $validated['image_path'] = $request->file('image')->store('facilities', 'public');
+            $facility->image_path = $request->file('image')->store('facilities', 'public');
         }
 
         unset($validated['image']);
 
-        $facility->update($validated);
+        $facility->fill($validated);
+        $facility->save();
 
         return response()->json($facility->load('amenities'));
     }
@@ -230,7 +229,7 @@ class FacilityController extends Controller
             'is_available' => ['boolean'],
         ]);
 
-        $amenity::update($validated);
+        $amenity->update($validated);
 
         return response()->json($amenity);
     }
