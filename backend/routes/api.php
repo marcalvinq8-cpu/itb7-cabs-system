@@ -77,7 +77,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Facility management
         Route::post('/admin/facilities',                          [FacilityController::class, 'store']);
-        Route::put('/admin/facilities/{id}',                      [FacilityController::class, 'update']);
+        Route::match(['put', 'post'], '/admin/facilities/{id}', [FacilityController::class, 'update']);
         Route::delete('/admin/facilities/{id}',                   [FacilityController::class, 'destroy']);
         Route::post('/admin/facilities/{id}/maintenance',         [FacilityController::class, 'updateMaintenance']);
 

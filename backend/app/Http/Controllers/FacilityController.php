@@ -122,7 +122,7 @@ class FacilityController extends Controller
             'capacity'       => ['sometimes', 'integer', 'min:1'],
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
-            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+           'image' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -133,6 +133,7 @@ class FacilityController extends Controller
         }
 
         unset($validated['image']);
+
         $facility->update($validated);
 
         return response()->json($facility->load('amenities'));
