@@ -1,9 +1,13 @@
 #!/bin/sh
 
+# Burahe muna ang lumang storage link kung mayroon man
+rm -rf public/storage
+
 # Siguraduhin na nakakonekta ang public storage para sa mga images
 php artisan storage:link --force
 
 # I-clear at i-cache ang configurations
+php artisan config:clear
 php artisan config:cache
 php artisan route:cache
 
