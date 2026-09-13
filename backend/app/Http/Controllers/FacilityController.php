@@ -89,12 +89,23 @@ class FacilityController extends Controller
             'capacity'       => ['required', 'integer', 'min:1'],
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'status'         => ['in:available,under_maintenance,unavailable,closed'],
-            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            'image'          => ['nullable'],
         ]);
 
         $imagePath = null;
+
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('facilities', 'public');
+        } elseif ($request->filled('image') && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
+            $imageData = substr($request->image, strpos($request->image, ',') + 1);
+            $type = strtolower($type[1]);
+            $imageData = base64_decode($imageData);
+
+            if ($imageData !== false) {
+                $fileName = 'facilities/' . uniqid() . '.' . $type;
+                Storage::disk('public')->put($fileName, $imageData);
+                $imagePath = $fileName;
+            }
         }
 
         $facility = Facility::create([
@@ -114,10 +125,6 @@ class FacilityController extends Controller
     {
         $facility = Facility::findOrFail($id);
 
-        if ($request->has('image') && !($request->file('image') instanceof \Illuminate\Http\UploadedFile)) {
-            $request->request->remove('image');
-        }
-
         $validated = $request->validate([
             'name'           => ['sometimes', 'string', 'max:255'],
             'description'    => ['sometimes', 'string'],
@@ -125,7 +132,7 @@ class FacilityController extends Controller
             'capacity'       => ['sometimes', 'integer', 'min:1'],
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
-            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            'image'          => ['nullable'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -133,6 +140,19 @@ class FacilityController extends Controller
                 Storage::disk('public')->delete($facility->image_path);
             }
             $facility->image_path = $request->file('image')->store('facilities', 'public');
+        } elseif ($request->filled('image') && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
+            if ($facility->image_path) {
+                Storage::disk('public')->delete($facility->image_path);
+            }
+            $imageData = substr($request->image, strpos($request->image, ',') + 1);
+            $type = strtolower($type[1]);
+            $imageData = base64_decode($imageData);
+
+            if ($imageData !== false) {
+                $fileName = 'facilities/' . uniqid() . '.' . $type;
+                Storage::disk('public')->put($fileName, $imageData);
+                $facility->image_path = $fileName;
+            }
         }
 
         unset($validated['image']);
