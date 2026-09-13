@@ -9,7 +9,7 @@ use App\Models\Reservation;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Carbon\Carbon; // Idinagdag para masigurong ma-format nang maayos ang dates
+use Carbon\Carbon;
 
 class FacilityController extends Controller
 {
@@ -48,7 +48,6 @@ class FacilityController extends Controller
             ->orderBy('start_time')
             ->get()
             ->map(fn ($s) => [
-                // Sinisiguro natin na gagana kahit string o Carbon object man ang reservation_date
                 'reservation_date' => Carbon::parse($s->reservation_date)->format('Y-m-d'),
                 'start_time'       => substr($s->start_time, 0, 5),
                 'end_time'         => substr($s->end_time,   0, 5),
@@ -115,6 +114,12 @@ class FacilityController extends Controller
     {
         $facility = Facility::findOrFail($id);
 
+        // Kung ang 'image' key ay hindi totoong File object (halimbawa URL string mula sa frontend),
+        // tatanggalin ito sa request bago mag-validate para hindi mag-fail ang validation.
+        if ($request->has('image') && !($request->file('image') instanceof \Illuminate\Http\UploadedFile)) {
+            $request->request->remove('image');
+        }
+
         $validated = $request->validate([
             'name'           => ['sometimes', 'string', 'max:255'],
             'description'    => ['sometimes', 'string'],
@@ -122,7 +127,7 @@ class FacilityController extends Controller
             'capacity'       => ['sometimes', 'integer', 'min:1'],
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
-           'image' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            'image'          => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         if ($request->hasFile('image')) {
@@ -182,7 +187,6 @@ class FacilityController extends Controller
                 ->get();
 
             foreach ($affectedReservations as $reservation) {
-                // Sinisigurong ligtas ang pag-format ng petsa gamit ang Carbon::parse
                 $formattedDate = Carbon::parse($reservation->reservation_date)->format('M d, Y');
 
                 NotificationService::notifyUser(
@@ -226,7 +230,7 @@ class FacilityController extends Controller
             'is_available' => ['boolean'],
         ]);
 
-        $amenity->update($validated);
+        $amenity::update($validated);
 
         return response()->json($amenity);
     }
