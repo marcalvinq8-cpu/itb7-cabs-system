@@ -22,13 +22,36 @@ class Facility extends Model
         'maintenance_end',
     ];
 
+    /**
+     * Isama ang dynamic field na 'image_url' tuwing ginagawang JSON ang Model
+     */
+    protected $appends = ['image_url'];
+
     protected function casts(): array
     {
         return [
             'maintenance_start' => 'date',
-            'maintenance_end' => 'date',
-            'price_per_hour' => 'decimal:2',
+            'maintenance_end'   => 'date',
+            'price_per_hour'    => 'decimal:2',
         ];
+    }
+
+    /**
+     * Accessor para awtomatikong buuin ang buong HTTP URL ng image
+     */
+    public function getImageUrlAttribute()
+    {
+        if (!$this->image_path) {
+            return null;
+        }
+
+        // Kung buong URL na ang naka-save (e.g. http://...)
+        if (str_starts_with($this->image_path, 'http')) {
+            return $this->image_path;
+        }
+
+        // Bubuo ng: http://localhost:8000/storage/facilities/filename.jpg
+        return asset('storage/' . ltrim($this->image_path, '/'));
     }
 
     public function amenities()

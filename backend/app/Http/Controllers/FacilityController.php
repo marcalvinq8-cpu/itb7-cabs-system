@@ -22,12 +22,9 @@ class FacilityController extends Controller
         }
 
         $facilities = $query->orderBy('name')->get()->map(function ($facility) {
-            return array_merge($facility->toArray(), [
-                'amenities_count' => $facility->amenities->count(),
-                'image_url' => $facility->image_path
-                    ? asset('storage/' . $facility->image_path)
-                    : null,
-            ]);
+            $data = $facility->toArray();
+            $data['amenities_count'] = $facility->amenities->count();
+            return $data;
         });
 
         return response()->json($facilities);
@@ -56,9 +53,6 @@ class FacilityController extends Controller
 
         return response()->json(array_merge($facility->toArray(), [
             'booked_slots' => $bookedSlots,
-            'image_url' => $facility->image_path
-                ? asset('storage/' . $facility->image_path)
-                : null,
         ]));
     }
 
@@ -110,7 +104,6 @@ class FacilityController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            // Huwag ibagsak ang buong request kapag nag-error ang image saving
             $imagePath = null;
         }
 
@@ -163,7 +156,7 @@ class FacilityController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            // Huwag ibagsak ang buong request kapag nag-error ang image saving
+            // Huwag ibagsak ang buong request kapag nag-error
         }
 
         unset($validated['image']);
@@ -192,10 +185,10 @@ class FacilityController extends Controller
         $facility = Facility::findOrFail($id);
 
         $validated = $request->validate([
-            'status'             => ['required', 'in:available,under_maintenance,unavailable,closed'],
-            'maintenance_note'   => ['nullable', 'string'],
-            'maintenance_start'  => ['nullable', 'date'],
-            'maintenance_end'    => ['nullable', 'date', 'after_or_equal:maintenance_start'],
+            'status'           => ['required', 'in:available,under_maintenance,unavailable,closed'],
+            'maintenance_note' => ['nullable', 'string'],
+            'maintenance_start'=> ['nullable', 'date'],
+            'maintenance_end'  => ['nullable', 'date', 'after_or_equal:maintenance_start'],
         ]);
 
         $facility->update($validated);
@@ -208,7 +201,6 @@ class FacilityController extends Controller
             'end_date'    => $validated['maintenance_end'] ?? now()->toDateString(),
         ]);
 
-        // Notify clients with active reservations for this facility
         if ($validated['status'] !== 'available') {
             $affectedReservations = Reservation::where('facility_id', $facility->id)
                 ->whereIn('status', ['pending', 'approved'])
