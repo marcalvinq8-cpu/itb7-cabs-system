@@ -94,18 +94,24 @@ class FacilityController extends Controller
 
         $imagePath = null;
 
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('facilities', 'public');
-        } elseif ($request->filled('image') && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
-            $imageData = substr($request->image, strpos($request->image, ',') + 1);
-            $type = strtolower($type[1]);
-            $imageData = base64_decode($imageData);
+        try {
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('facilities', 'public');
+            } elseif ($request->filled('image') && is_string($request->image) && str_starts_with($request->image, 'data:image')) {
+                preg_match('/^data:image\/(\w+);base64,/', $request->image, $type);
+                $ext = isset($type[1]) ? strtolower($type[1]) : 'png';
+                $imageData = substr($request->image, strpos($request->image, ',') + 1);
+                $decoded = base64_decode($imageData);
 
-            if ($imageData !== false) {
-                $fileName = 'facilities/' . uniqid() . '.' . $type;
-                Storage::disk('public')->put($fileName, $imageData);
-                $imagePath = $fileName;
+                if ($decoded !== false) {
+                    $fileName = 'facilities/' . uniqid() . '.' . $ext;
+                    Storage::disk('public')->put($fileName, $decoded);
+                    $imagePath = $fileName;
+                }
             }
+        } catch (\Exception $e) {
+            // Huwag ibagsak ang buong request kapag nag-error ang image saving
+            $imagePath = null;
         }
 
         $facility = Facility::create([
@@ -135,24 +141,29 @@ class FacilityController extends Controller
             'image'          => ['nullable'],
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($facility->image_path) {
-                Storage::disk('public')->delete($facility->image_path);
-            }
-            $facility->image_path = $request->file('image')->store('facilities', 'public');
-        } elseif ($request->filled('image') && preg_match('/^data:image\/(\w+);base64,/', $request->image, $type)) {
-            if ($facility->image_path) {
-                Storage::disk('public')->delete($facility->image_path);
-            }
-            $imageData = substr($request->image, strpos($request->image, ',') + 1);
-            $type = strtolower($type[1]);
-            $imageData = base64_decode($imageData);
+        try {
+            if ($request->hasFile('image')) {
+                if ($facility->image_path) {
+                    Storage::disk('public')->delete($facility->image_path);
+                }
+                $facility->image_path = $request->file('image')->store('facilities', 'public');
+            } elseif ($request->filled('image') && is_string($request->image) && str_starts_with($request->image, 'data:image')) {
+                if ($facility->image_path) {
+                    Storage::disk('public')->delete($facility->image_path);
+                }
+                preg_match('/^data:image\/(\w+);base64,/', $request->image, $type);
+                $ext = isset($type[1]) ? strtolower($type[1]) : 'png';
+                $imageData = substr($request->image, strpos($request->image, ',') + 1);
+                $decoded = base64_decode($imageData);
 
-            if ($imageData !== false) {
-                $fileName = 'facilities/' . uniqid() . '.' . $type;
-                Storage::disk('public')->put($fileName, $imageData);
-                $facility->image_path = $fileName;
+                if ($decoded !== false) {
+                    $fileName = 'facilities/' . uniqid() . '.' . $ext;
+                    Storage::disk('public')->put($fileName, $decoded);
+                    $facility->image_path = $fileName;
+                }
             }
+        } catch (\Exception $e) {
+            // Huwag ibagsak ang buong request kapag nag-error ang image saving
         }
 
         unset($validated['image']);
