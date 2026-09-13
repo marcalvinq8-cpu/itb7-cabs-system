@@ -236,13 +236,18 @@ export default function AdminFacilities() {
 
   const buildFormData = () => {
     const fd = new FormData()
-    fd.append('name',           form.name)
-    fd.append('description',    form.description)
-    fd.append('location',       form.location)
-    fd.append('capacity',       form.capacity)
-    fd.append('price_per_hour', form.price_per_hour)
-    fd.append('status',         form.status)
-    if (imageFile) fd.append('image', imageFile)
+    fd.append('name', form.name || '')
+    fd.append('description', form.description || '')
+    fd.append('location', form.location || '')
+    fd.append('capacity', form.capacity || '')
+    fd.append('price_per_hour', form.price_per_hour || '')
+    fd.append('status', form.status || 'available')
+
+    
+    if (imageFile instanceof File) {
+      fd.append('image', imageFile)
+    }
+
     return fd
   }
 
@@ -257,9 +262,12 @@ export default function AdminFacilities() {
   })
 
   const updateMutation = useMutation({
-    // PHP doesn't parse multipart/form-data on PUT — use POST with _method spoofing
+    
     mutationFn: ({ id, fd }) => {
-      fd.append('_method', 'PUT')
+     
+      if (!fd.has('_method')) {
+        fd.append('_method', 'PUT')
+      }
       return api.post(`/admin/facilities/${id}`, fd)
     },
     onSuccess: () => {
