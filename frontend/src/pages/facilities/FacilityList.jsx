@@ -89,7 +89,7 @@ export default function FacilityList() {
         <div className="flex gap-2">
           {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-8 w-20 rounded-full" />)}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-[#1C2833] grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="overflow-hidden">
               <Skeleton className="h-44 rounded-none rounded-t-xl" />
@@ -226,87 +226,91 @@ export default function FacilityList() {
 function FacilityCard({ facility }) {
   const available = facility.status === 'available'
   const [showModal, setShowModal] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const navigate = useNavigate()
+
+  const imageUrl = facility.image_url || facility.image_path || facility.image
 
   return (
     <>
-    <Card
-      className="flex flex-col overflow-hidden group cursor-pointer hover:shadow-md transition-shadow"
-      onClick={() => navigate(`/facilities/${facility.id}`)}
-    >
-      <div className="h-44 relative overflow-hidden">
-        {facility.image_url ? (
-          <img
-            src={facility.image_url}
-            alt={facility.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <FacilityPlaceholder name={facility.name} />
-        )}
-        {facility.image_url && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-        )}
-        <div className="absolute top-3 right-3">
-          <Badge status={facility.status} />
-        </div>
-      </div>
-
-      <CardContent className="flex flex-col flex-1 gap-3 pt-4">
-        <div>
-          <h3 className="font-semibold text-gray-900">{facility.name}</h3>
-          {facility.location && (
-            <p className="text-xs text-[#1C2833] flex items-center gap-1 mt-0.5">
-              <MapPin className="h-3 w-3" /> {facility.location}
-            </p>
+      <Card
+        className="flex flex-col overflow-hidden group cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => navigate(`/facilities/${facility.id}`)}
+      >
+        <div className="h-44 relative overflow-hidden">
+          {imageUrl && !imgError ? (
+            <img
+              src={imageUrl}
+              alt={facility.name}
+              onError={() => setImgError(true)}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <FacilityPlaceholder name={facility.name} />
           )}
-          {facility.description && (
-            <p className="text-sm text-[#1C2833] mt-1 line-clamp-2">{facility.description}</p>
+          {imageUrl && !imgError && (
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           )}
+          <div className="absolute top-3 right-3">
+            <Badge status={facility.status} />
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-          {facility.capacity && (
-            <span className="flex items-center gap-1">
-              <Users className="h-4 w-4 text-[#1C2833]" /> {facility.capacity} max
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            <Clock className="h-4 w-4 text-[#1C2833]" />
-            ₱{Number(facility.price_per_hour).toLocaleString()}/hr
-          </span>
-        </div>
-
-        {facility.amenities?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {facility.amenities.slice(0, 3).map(a => (
-              <span key={a.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{a.name}</span>
-            ))}
-            {facility.amenities.length > 3 && (
-              <span className="text-xs text-[#1C2833] py-0.5">+{facility.amenities.length - 3} more</span>
+        <CardContent className="flex flex-col flex-1 gap-3 pt-4">
+          <div>
+            <h3 className="font-semibold text-gray-900">{facility.name}</h3>
+            {facility.location && (
+              <p className="text-xs text-[#1C2833] flex items-center gap-1 mt-0.5">
+                <MapPin className="h-3 w-3" /> {facility.location}
+              </p>
+            )}
+            {facility.description && (
+              <p className="text-sm text-[#1C2833] mt-1 line-clamp-2">{facility.description}</p>
             )}
           </div>
-        )}
 
-        {available && (
-          <div className="mt-auto pt-2">
-            <Button
-              className="w-full"
-              size="sm"
-              onClick={e => { e.stopPropagation(); setShowModal(true) }}
-            >
-              Reserve
-            </Button>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            {facility.capacity && (
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4 text-[#1C2833]" /> {facility.capacity} max
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4 text-[#1C2833]" />
+              ₱{Number(facility.price_per_hour).toLocaleString()}/hr
+            </span>
           </div>
-        )}
-      </CardContent>
-    </Card>
-    {showModal && (
-      <NewReservationModal
-        preselectedFacility={facility.id}
-        onClose={() => setShowModal(false)}
-      />
-    )}
+
+          {facility.amenities?.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {facility.amenities.slice(0, 3).map(a => (
+                <span key={a.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{a.name}</span>
+              ))}
+              {facility.amenities.length > 3 && (
+                <span className="text-xs text-[#1C2833] py-0.5">+{facility.amenities.length - 3} more</span>
+              )}
+            </div>
+          )}
+
+          {available && (
+            <div className="mt-auto pt-2">
+              <Button
+                className="w-full"
+                size="sm"
+                onClick={e => { e.stopPropagation(); setShowModal(true) }}
+              >
+                Reserve
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {showModal && (
+        <NewReservationModal
+          preselectedFacility={facility.id}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </>
   )
 }
