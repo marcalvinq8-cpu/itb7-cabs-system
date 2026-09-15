@@ -32,14 +32,8 @@ class Facility extends Model
     {
         return [
             'maintenance_start' => 'date',
-<<<<<<< HEAD
             'maintenance_end'   => 'date',
             'price_per_hour'    => 'decimal:2',
-=======
-            'maintenance_end' => 'date',
-            'price_per_hour' => 'decimal:2',
-            'requires_authorization_letter' => 'boolean',
->>>>>>> upstream/main
         ];
     }
 

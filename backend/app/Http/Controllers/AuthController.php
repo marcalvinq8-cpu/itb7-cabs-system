@@ -66,27 +66,16 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials.'], 401);
         }
 
-<<<<<<< HEAD
-        // Lumikha ng Sanctum Token
-=======
-        $user = Auth::user();
+            if (!$user->is_verified) {
+                $this->issueAndSendVerificationCode($user);
 
-        if (!$user->is_verified) {
-            // Don't leave a session behind for an account that isn't allowed to use one yet.
-            Auth::logout();
+                return response()->json([
+                    'message'            => 'Please verify your email before signing in. A new code has been sent.',
+                    'email'              => $user->email,
+                    'needs_verification' => true,
+                ], 403);
+            }
 
-            // Refresh the code so a user who registered a while ago and comes back to
-            // log in isn't stuck with a long-expired one.
-            $this->issueAndSendVerificationCode($user);
-
-            return response()->json([
-                'message'            => 'Please verify your email before signing in. A new code has been sent.',
-                'email'              => $user->email,
-                'needs_verification' => true,
-            ], 403);
-        }
-
->>>>>>> upstream/main
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
