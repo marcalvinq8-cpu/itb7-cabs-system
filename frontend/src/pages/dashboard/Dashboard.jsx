@@ -30,8 +30,17 @@ function getSportTheme(name = '') {
 
 function FacilityThumb({ facility }) {
   const theme = getSportTheme(facility.name)
-  if (facility.image_url) {
-    return <img src={facility.image_url} alt={facility.name} className="w-full h-full object-cover" />
+  const [imageError, setImageError] = useState(false)
+
+  if (facility.image_url && !imageError) {
+    return (
+      <img
+        src={facility.image_url}
+        alt={facility.name}
+        onError={() => setImageError(true)}
+        className="w-full h-full object-cover"
+      />
+    )
   }
   return (
     <div

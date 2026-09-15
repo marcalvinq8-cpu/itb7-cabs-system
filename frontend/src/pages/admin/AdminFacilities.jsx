@@ -46,6 +46,7 @@ function getSportTheme(name = '') {
 function FacilityRow({ facility, onEdit, onMaint, onDelete }) {
   const theme = getSportTheme(facility.name)
   const navigate = useNavigate()
+  const [imageError, setImageError] = useState(false)
   return (
     <tr
       onClick={() => navigate(`/facilities/${facility.id}`)}
@@ -54,8 +55,8 @@ function FacilityRow({ facility, onEdit, onMaint, onDelete }) {
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-            {facility.image_url ? (
-              <img src={facility.image_url} alt={facility.name} className="w-full h-full object-cover" />
+            {facility.image_url && !imageError ? (
+              <img src={facility.image_url} alt={facility.name} onError={() => setImageError(true)} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"
                 style={{ background: `linear-gradient(135deg, ${theme.color}, ${theme.dark})` }}>
