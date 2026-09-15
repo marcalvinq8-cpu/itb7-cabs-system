@@ -34,6 +34,7 @@ class Facility extends Model
             'maintenance_start' => 'date',
             'maintenance_end'   => 'date',
             'price_per_hour'    => 'decimal:2',
+            'requires_authorization_letter' => 'boolean',
         ];
     }
 

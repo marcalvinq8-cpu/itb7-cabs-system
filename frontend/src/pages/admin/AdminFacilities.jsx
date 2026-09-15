@@ -172,7 +172,7 @@ export default function AdminFacilities() {
       fd.append('image', imageFile)
     }
 
-    fd.append('requires_authorization_letter', form.requires_authorization_letter ? 'true' : 'false')
+    fd.append('requires_authorization_letter', form.requires_authorization_letter ? '1' : '0')
     return fd
   }
 
