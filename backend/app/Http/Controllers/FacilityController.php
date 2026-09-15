@@ -84,11 +84,9 @@ class FacilityController extends Controller
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'status'         => ['in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Laravel's 'image' rule doesn't accept SVG in this version even though
-            // it's a perfectly valid image (fileinfo correctly detects it as
-            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
-            // aren't rejected with a misleading "must be an image" error.
-            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            // Keep this optional for clients that cannot send multipart data;
+            // only a real uploaded file or a valid data URI is stored below.
+            'image'         => ['nullable'],
         ]);
 
         $imagePath = null;
@@ -138,11 +136,9 @@ class FacilityController extends Controller
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Laravel's 'image' rule doesn't accept SVG in this version even though
-            // it's a perfectly valid image (fileinfo correctly detects it as
-            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
-            // aren't rejected with a misleading "must be an image" error.
-            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+            // Keep this optional for clients that cannot send multipart data;
+            // only a real uploaded file or a valid data URI is stored below.
+            'image'         => ['nullable'],
         ]);
 
         try {
