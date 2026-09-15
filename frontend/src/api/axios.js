@@ -14,6 +14,13 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('cabs_token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  // Let Axios set the multipart boundary for file uploads. The default JSON
+  // header prevents Laravel from parsing FormData as an uploaded file.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
+
   return config
 })
 
