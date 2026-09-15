@@ -84,9 +84,8 @@ class FacilityController extends Controller
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'status'         => ['in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Keep this optional for clients that cannot send multipart data;
-            // only a real uploaded file or a valid data URI is stored below.
-            'image'         => ['nullable'],
+            // Accept real image uploads, including SVG files supported by the UI.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         $imagePath = null;
@@ -136,9 +135,8 @@ class FacilityController extends Controller
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Keep this optional for clients that cannot send multipart data;
-            // only a real uploaded file or a valid data URI is stored below.
-            'image'         => ['nullable'],
+            // Accept real image uploads, including SVG files supported by the UI.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         try {
