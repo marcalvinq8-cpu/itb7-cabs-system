@@ -160,7 +160,6 @@ export default function AdminFacilities() {
 
   const buildFormData = () => {
     const fd = new FormData()
-<<<<<<< HEAD
     fd.append('name', form.name || '')
     fd.append('description', form.description || '')
     fd.append('location', form.location || '')
@@ -173,7 +172,6 @@ export default function AdminFacilities() {
       fd.append('image', imageFile)
     }
 
-=======
     fd.append('name',           form.name)
     fd.append('description',    form.description)
     fd.append('location',       form.location)
@@ -181,7 +179,6 @@ export default function AdminFacilities() {
     fd.append('price_per_hour', form.price_per_hour)
     fd.append('status',         form.status)
     fd.append('requires_authorization_letter', form.requires_authorization_letter ? 'true' : 'false')
->>>>>>> upstream/main
     return fd
   }
 

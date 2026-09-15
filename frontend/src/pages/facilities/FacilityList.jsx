@@ -250,17 +250,14 @@ function FacilityCard({ facility }) {
           {imageUrl && !imgError && (
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           )}
-<<<<<<< HEAD
           <div className="absolute top-3 right-3">
             <Badge status={facility.status} />
           </div>
-=======
           {facility.requires_authorization_letter && (
             <p className="text-xs text-[#8E44AD] flex items-center gap-1 mt-1">
               <FileCheck className="h-3 w-3 shrink-0" /> Requires an authorization letter to reserve
             </p>
           )}
->>>>>>> upstream/main
         </div>
 
         <CardContent className="flex flex-col flex-1 gap-3 pt-4">
