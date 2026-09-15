@@ -7,6 +7,7 @@ use App\Models\Facility;
 use App\Models\MaintenanceLog;
 use App\Models\Reservation;
 use App\Services\NotificationService;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -84,7 +85,10 @@ class FacilityController extends Controller
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'status'         => ['in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Accept real image uploads, including SVG files supported by the UI.
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
             'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
@@ -92,7 +96,7 @@ class FacilityController extends Controller
 
         try {
             if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('facilities', 'public');
+                $imagePath = $this->storeFacilityImage($request->file('image'));
             } elseif ($request->filled('image') && is_string($request->image) && str_starts_with($request->image, 'data:image')) {
                 preg_match('/^data:image\/(\w+);base64,/', $request->image, $type);
                 $ext = isset($type[1]) ? strtolower($type[1]) : 'png';
@@ -135,18 +139,21 @@ class FacilityController extends Controller
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
             'requires_authorization_letter' => ['sometimes', 'boolean'],
-            // Accept real image uploads, including SVG files supported by the UI.
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
             'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
         ]);
 
         try {
             if ($request->hasFile('image')) {
-                if ($facility->image_path) {
+                if ($facility->image_path && !str_starts_with($facility->image_path, 'http')) {
                     Storage::disk('public')->delete($facility->image_path);
                 }
-                $facility->image_path = $request->file('image')->store('facilities', 'public');
+                $facility->image_path = $this->storeFacilityImage($request->file('image'));
             } elseif ($request->filled('image') && is_string($request->image) && str_starts_with($request->image, 'data:image')) {
-                if ($facility->image_path) {
+                if ($facility->image_path && !str_starts_with($facility->image_path, 'http')) {
                     Storage::disk('public')->delete($facility->image_path);
                 }
                 preg_match('/^data:image\/(\w+);base64,/', $request->image, $type);
@@ -183,13 +190,30 @@ class FacilityController extends Controller
     {
         $facility = Facility::findOrFail($id);
 
-        if ($facility->image_path) {
+        if ($facility->image_path && !str_starts_with($facility->image_path, 'http')) {
             Storage::disk('public')->delete($facility->image_path);
         }
 
         $facility->delete();
 
         return response()->json(['message' => 'Facility deleted successfully.']);
+    }
+
+    private function storeFacilityImage($file): ?string
+    {
+        if (config('services.cloudinary.url')) {
+            try {
+                $result = Cloudinary::uploadApi()->upload($file->getRealPath(), [
+                    'folder' => 'cabs/facilities',
+                ]);
+
+                return $result['secure_url'] ?? null;
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        return $file->store('facilities', 'public') ?: null;
     }
 
     public function updateMaintenance(Request $request, $id)
