@@ -102,7 +102,14 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
       queryClient.invalidateQueries({ queryKey: ['reservations'] })
       setCreatedId(res.data.id)
     },
-    onError: err => toast.error(err.response?.data?.message || 'Failed to submit reservation.'),
+    onError: err => {
+      const response = err.response?.data
+      const fieldErrors = Object.fromEntries(
+        Object.entries(response?.errors || {}).map(([field, messages]) => [field, messages[0]])
+      )
+      setErrors(fieldErrors)
+      toast.error(response?.message || Object.values(fieldErrors)[0] || 'Failed to submit reservation.')
+    },
   })
 
   const setField = (field, value) => {
