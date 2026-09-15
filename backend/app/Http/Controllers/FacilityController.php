@@ -77,6 +77,7 @@ class FacilityController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+<<<<<<< HEAD
             'name'           => ['required', 'string', 'max:255'],
             'description'    => ['required', 'string'],
             'location'       => ['required', 'string', 'max:255'],
@@ -84,6 +85,20 @@ class FacilityController extends Controller
             'price_per_hour' => ['required', 'numeric', 'min:0'],
             'status'         => ['in:available,under_maintenance,unavailable,closed'],
             'image'          => ['nullable'],
+=======
+            'name'          => ['required', 'string', 'max:255'],
+            'description'   => ['required', 'string'],
+            'location'      => ['required', 'string', 'max:255'],
+            'capacity'      => ['required', 'integer', 'min:1'],
+            'price_per_hour'=> ['required', 'numeric', 'min:0'],
+            'status'        => ['in:available,under_maintenance,unavailable'],
+            'requires_authorization_letter' => ['sometimes', 'boolean'],
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+>>>>>>> upstream/main
         ]);
 
         $imagePath = null;
@@ -115,6 +130,7 @@ class FacilityController extends Controller
             'price_per_hour' => $validated['price_per_hour'],
             'status'         => $validated['status'] ?? 'available',
             'image_path'     => $imagePath,
+            'requires_authorization_letter' => $request->boolean('requires_authorization_letter'),
         ]);
 
         return response()->json($facility->load('amenities'), 201);
@@ -125,6 +141,7 @@ class FacilityController extends Controller
         $facility = Facility::findOrFail($id);
 
         $validated = $request->validate([
+<<<<<<< HEAD
             'name'           => ['sometimes', 'string', 'max:255'],
             'description'    => ['sometimes', 'string'],
             'location'       => ['sometimes', 'string', 'max:255'],
@@ -132,6 +149,20 @@ class FacilityController extends Controller
             'price_per_hour' => ['sometimes', 'numeric', 'min:0'],
             'status'         => ['sometimes', 'in:available,under_maintenance,unavailable,closed'],
             'image'          => ['nullable'],
+=======
+            'name'          => ['sometimes', 'string', 'max:255'],
+            'description'   => ['sometimes', 'string'],
+            'location'      => ['sometimes', 'string', 'max:255'],
+            'capacity'      => ['sometimes', 'integer', 'min:1'],
+            'price_per_hour'=> ['sometimes', 'numeric', 'min:0'],
+            'status'        => ['sometimes', 'in:available,under_maintenance,unavailable'],
+            'requires_authorization_letter' => ['sometimes', 'boolean'],
+            // Laravel's 'image' rule doesn't accept SVG in this version even though
+            // it's a perfectly valid image (fileinfo correctly detects it as
+            // image/svg+xml) — use an explicit mimes list instead so SVG uploads
+            // aren't rejected with a misleading "must be an image" error.
+            'image'         => ['nullable', 'file', 'mimes:jpg,jpeg,png,gif,webp,svg', 'max:2048'],
+>>>>>>> upstream/main
         ]);
 
         try {
@@ -157,6 +188,13 @@ class FacilityController extends Controller
             }
         } catch (\Exception $e) {
             // Huwag ibagsak ang buong request kapag nag-error
+        }
+
+        // This form posts as multipart/form-data, so a checkbox arrives as the
+        // string "true"/"false" — $request->boolean() normalizes that correctly
+        // (a raw (bool) cast would treat the string "false" as truthy).
+        if ($request->has('requires_authorization_letter')) {
+            $validated['requires_authorization_letter'] = $request->boolean('requires_authorization_letter');
         }
 
         unset($validated['image']);
@@ -185,10 +223,17 @@ class FacilityController extends Controller
         $facility = Facility::findOrFail($id);
 
         $validated = $request->validate([
+<<<<<<< HEAD
             'status'           => ['required', 'in:available,under_maintenance,unavailable,closed'],
             'maintenance_note' => ['nullable', 'string'],
             'maintenance_start'=> ['nullable', 'date'],
             'maintenance_end'  => ['nullable', 'date', 'after_or_equal:maintenance_start'],
+=======
+            'status'             => ['required', 'in:available,under_maintenance,unavailable'],
+            'maintenance_note'   => ['nullable', 'string'],
+            'maintenance_start'  => ['nullable', 'date'],
+            'maintenance_end'    => ['nullable', 'date', 'after_or_equal:maintenance_start'],
+>>>>>>> upstream/main
         ]);
 
         $facility->update($validated);
