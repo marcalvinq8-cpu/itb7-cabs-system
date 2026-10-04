@@ -18,15 +18,27 @@
            (₱, U+20B1), so it was rendering as "?". DejaVu Sans covers it. */
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 11px; color: #1a1a1a; }
 
-        /* Header — centered org block only. Control No./Generated/Printed By/Via
-           moved down into the footer (see .footer-meta below) so the header stays
-           clean and those details don't compete for attention. */
-        .header { border-bottom: 3px solid #C0392B; padding-bottom: 14px; margin-bottom: 18px; text-align: center; }
-        .header img.logo { height: 56px; }
-        .header h1 { font-size: 36px; font-weight: 900; color: #C0392B; letter-spacing: 4px; line-height: 1; margin-top: 4px; }
-        .header .org-name    { font-size: 12px; font-weight: 700; color: #1a1a1a; margin-top: 4px; }
-        .header .org-address { font-size: 9.5px; color: #555; margin-top: 1px; }
-        .header .badge {
+        /* Header — a 3-column table: an empty spacer on the left (for balance),
+           the org block centered, and Control No. / Generated date at the upper
+           right. Printed By / Printed Via stay down in the footer (.footer-meta)
+           — less load on the header, still on the document somewhere. */
+        .header { border-bottom: 3px solid #C0392B; padding-bottom: 14px; margin-bottom: 18px; }
+        table.header-table { width: 100%; border-collapse: collapse; }
+        table.header-table td { vertical-align: top; }
+
+        .header-spacer { width: 24%; }
+        .header-meta    { width: 24%; text-align: right; }
+        .header-meta .label {
+            text-transform: uppercase; letter-spacing: 0.4px; color: #96281B; font-weight: 700; font-size: 8px;
+        }
+        .header-meta .value { color: #1a1a1a; font-size: 10px; margin: 2px 0 8px; }
+
+        .header-org { width: 52%; text-align: center; }
+        .header-org img.logo { height: 56px; }
+        .header-org h1 { font-size: 36px; font-weight: 900; color: #C0392B; letter-spacing: 4px; line-height: 1; margin-top: 4px; }
+        .header-org .org-name    { font-size: 12px; font-weight: 700; color: #1a1a1a; margin-top: 4px; }
+        .header-org .org-address { font-size: 9.5px; color: #555; margin-top: 1px; }
+        .header-org .badge {
             display: inline-block; background: #C0392B; color: #fff; font-size: 10px; font-weight: 700;
             padding: 4px 14px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; margin-top: 8px;
         }
@@ -80,37 +92,37 @@
 <body>
 <div class="page">
 
-    {{-- Header — just the org identity; document metadata lives in the footer. --}}
+    {{-- Header — org identity centered, Control No. / Generated at the upper right. --}}
     <div class="header">
-        @if($logoBase64)
-            <img src="{{ $logoBase64 }}" alt="CABS" class="logo">
-        @else
-            <h1>CABS</h1>
-        @endif
-        <div class="org-name">Cabuyao Athletes Basic School</div>
-        <div class="org-address">Cabuyao, Laguna, Philippines</div>
-        <div class="badge">Reservation Report</div>
+        <table class="header-table">
+            <tr>
+                <td class="header-spacer"></td>
+                <td class="header-org">
+                    @if($logoBase64)
+                        <img src="{{ $logoBase64 }}" alt="CABS" class="logo">
+                    @else
+                        <h1>CABS</h1>
+                    @endif
+                    <div class="org-name">Cabuyao Athletes Basic School</div>
+                    <div class="org-address">Banaybanay, Cabuyao, Laguna, Philippines</div>
+                    <div class="badge">Reservation Report</div>
+                </td>
+                <td class="header-meta">
+                    <div class="label">Control No.</div>
+                    <div class="value">{{ $controlNumber }}</div>
+                    <div class="label">Generated</div>
+                    <div class="value">{{ $generatedAt->format('F d, Y g:i A') }}</div>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    {{-- Filters applied --}}
-    <div class="filters">
-        <div class="title">Filters Applied</div>
-        <div class="row">
-            <span>Facility: <strong>{{ $filters['facility'] ?? 'All facilities' }}</strong></span>
-            <span>Status: <strong>{{ $filters['status'] ?? 'All' }}</strong></span>
-            <span>Payment: <strong>{{ $filters['payment_status'] ?? 'All' }}</strong></span>
-        </div>
-    </div>
-
-    @if($truncated)
-    <div class="filters" style="background:#FEF9E7; border-color:#fbe7a1;">
-        <span style="font-size:10px; color:#78350f;">
-            Showing the most recent <strong>{{ number_format($reservations->count()) }}</strong> of
-            <strong>{{ number_format($totalMatching) }}</strong> matching records. Narrow the date range or
-            filters above to export the remaining records.
-        </span>
-    </div>
-    @endif
+    {{-- The export is always the full, unfiltered reservation history — no
+         on-screen filters carry over — so there's nothing to summarize here
+         anymore. Data is still silently capped at $maxRows per PDF (see
+         AnalyticsController) to keep dompdf's memory/render time in check on a
+         very large table; no on-page notice for it anymore, just no longer
+         shown to the admin. --}}
 
     <h2 class="section-title">Reservation Data</h2>
 
@@ -159,7 +171,7 @@
                 @endif
             </tr>
             @empty
-            <tr><td colspan="5" style="text-align:center; padding: 16px; color:#888;">No records match the selected filters.</td></tr>
+            <tr><td colspan="5" style="text-align:center; padding: 16px; color:#888;">No reservation records found.</td></tr>
             @endforelse
         </tbody>
         @if($reservations->count() > 0)
@@ -179,8 +191,6 @@
         <strong>CABS Online Reservation, Booking &amp; Payment System</strong><br>
         This report is system-generated and reflects data at the time of generation.
         <div class="footer-meta">
-            <span>Control No. {{ $controlNumber }}</span>
-            <span>Generated {{ $generatedAt->format('M d, Y g:i A') }}</span>
             <span>Printed By {{ $printedBy }}</span>
             <span>Printed Via CABS System</span>
         </div>

@@ -55,7 +55,15 @@ class ReservationController extends Controller
             'end_time'               => ['required', 'date_format:H:i', 'after:start_time'],
             'selected_amenities'     => ['nullable', 'array'],
             'selected_amenities.*'   => ['integer', 'exists:amenities,id'],
-            'terms_acknowledged'     => ['boolean'],
+            // Not "boolean" — this request posts as multipart/form-data whenever an
+            // authorization letter is attached (a real file upload can't travel any
+            // other way), and a checkbox/flag in multipart arrives as the literal
+            // string "true"/"false". Laravel's "boolean" rule only accepts
+            // true/false/1/0/'1'/'0' — NOT the strings "true"/"false" — so every
+            // reservation submitted together with a required authorization letter
+            // was rejected with a 422 here, no matter what. $request->boolean()
+            // below already normalizes any of these forms correctly.
+            'terms_acknowledged'     => ['sometimes'],
             'type'                   => ['required', 'in:reserve,book'],
             'authorization_letter'   => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
@@ -71,6 +79,18 @@ class ReservationController extends Controller
         if ($facility->requires_authorization_letter && !$request->hasFile('authorization_letter')) {
             return response()->json([
                 'message' => "{$facility->name} requires an authorization letter to be attached before you can submit a reservation.",
+            ], 422);
+        }
+
+        // A facility that requires an authorization letter always needs staff to
+        // actually look at that letter before anything is confirmed — that's
+        // incompatible with "Book", which auto-confirms the moment payment clears
+        // with no human review. The frontend already only offers "Reserve" for
+        // these facilities; this is the server-side backstop against a direct API
+        // call trying to force "book" through anyway.
+        if ($facility->requires_authorization_letter && $validated['type'] === 'book') {
+            return response()->json([
+                'message' => "{$facility->name} requires an authorization letter, so it only accepts reservation requests, not instant bookings.",
             ], 422);
         }
 
@@ -112,6 +132,8 @@ class ReservationController extends Controller
             ? $request->file('authorization_letter')->store('authorization-letters', 'local')
             : null;
 
+        $termsAcknowledged = $request->boolean('terms_acknowledged');
+
         $reservation = Reservation::create([
             'user_id'                   => $request->user()->id,
             'facility_id'               => $validated['facility_id'],
@@ -123,8 +145,8 @@ class ReservationController extends Controller
             'selected_amenities'        => $validated['selected_amenities'] ?? null,
             'status'                    => 'pending',
             'type'                      => $validated['type'],
-            'terms_acknowledged'        => $validated['terms_acknowledged'] ?? false,
-            'terms_acknowledged_at'     => ($validated['terms_acknowledged'] ?? false) ? now() : null,
+            'terms_acknowledged'        => $termsAcknowledged,
+            'terms_acknowledged_at'     => $termsAcknowledged ? now() : null,
             'authorization_letter_path' => $letterPath,
         ]);
 
@@ -217,7 +239,10 @@ class ReservationController extends Controller
         $user        = $request->user();
         $reservation = Reservation::with('payment')->findOrFail($id);
 
-        if ($user->isClient() && $reservation->user_id !== $user->id) {
+        // Cancelling is the client's own call to make — staff/admin "handle"
+        // reservations via approve/reject/complete, but no longer cancel on a
+        // client's behalf. Only the owning client may cancel their own request.
+        if (!$user->isClient() || $reservation->user_id !== $user->id) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

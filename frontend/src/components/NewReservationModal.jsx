@@ -71,6 +71,8 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
   const [createdId,   setCreatedId]   = useState(null)
   const [showReceipt, setShowReceipt] = useState(false)
 
+  const today = new Date().toISOString().split('T')[0]
+
   const { data: facilities = [], isLoading: loadingFacilities } = useQuery({
     queryKey: ['facilities'],
     queryFn: () => api.get('/facilities').then(r => r.data),
@@ -93,10 +95,20 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
     enabled: Boolean(form.facility_id && form.reservation_date),
   })
 
+  // A facility that requires an authorization letter always needs a human to
+  // review that letter before anything is confirmed — incompatible with "Book",
+  // which auto-confirms on payment with no review. Derived rather than written
+  // back into form.type: this is the type actually used everywhere below (the
+  // picker itself just stops offering "Book" for these facilities), so a stale
+  // "book" left in state from before a letter-requiring facility was selected
+  // can never leak into the submitted request, the terms shown, or the summary.
+  const letterRequired = Boolean(facilityDetail?.requires_authorization_letter)
+  const effectiveType  = letterRequired ? 'reserve' : form.type
+
   const mutation = useMutation({
     mutationFn: data => api.post('/reservations', data),
     onSuccess: res => {
-      toast.success(form.type === 'book'
+      toast.success(effectiveType === 'book'
         ? 'Booking submitted! Complete payment to continue.'
         : 'Reservation request submitted! An admin will review it before you can pay.')
       queryClient.invalidateQueries({ queryKey: ['reservations'] })
@@ -135,12 +147,15 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
     const errs = {}
     if (!form.facility_id)      errs.facility_id      = 'Please select a facility.'
     if (!form.reservation_date) errs.reservation_date = 'Please select a date.'
+    else if (form.reservation_date < today) errs.reservation_date = 'Reservation date cannot be in the past.'
     if (!form.start_time)       errs.start_time       = 'Please enter a start time.'
     if (!form.end_time)         errs.end_time         = 'Please enter an end time.'
     if (form.start_time && form.end_time && form.start_time >= form.end_time)
       errs.end_time = 'End time must be after start time.'
     if (hasConflict())
       errs.start_time = 'This time slot conflicts with an existing booking.'
+    if (facilityDetail?.requires_authorization_letter && !letterFile)
+      errs.authorization_letter = `${facilityDetail.name} requires an authorization letter to be attached.`
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -152,8 +167,6 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
     if (!form.number_of_participants || n < 1) errs.number_of_participants = 'Participants must be at least 1.'
     if (facilityDetail?.capacity && n > facilityDetail.capacity)
       errs.number_of_participants = `Exceeds facility capacity of ${facilityDetail.capacity}.`
-    if (facilityDetail?.requires_authorization_letter && !letterFile)
-      errs.authorization_letter = `${facilityDetail.name} requires an authorization letter to be attached.`
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -186,7 +199,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
       fd.append('number_of_participants', form.number_of_participants)
       form.selected_amenities.forEach(id => fd.append('selected_amenities[]', id))
       fd.append('terms_acknowledged', 'true')
-      fd.append('type',                form.type)
+      fd.append('type',                effectiveType)
       fd.append('authorization_letter', letterFile)
       mutation.mutate(fd)
       return
@@ -201,11 +214,10 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
       number_of_participants: Number(form.number_of_participants),
       selected_amenities:     form.selected_amenities,
       terms_acknowledged:     true,
-      type:                   form.type,
+      type:                   effectiveType,
     })
   }
 
-  const today          = new Date().toISOString().split('T')[0]
   const activeFacility = facilityDetail
 
   const durationHours = form.start_time && form.end_time
@@ -225,7 +237,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
       return <ReceiptModal reservationId={createdId} onClose={onClose} />
     }
 
-    if (form.type === 'reserve') {
+    if (effectiveType === 'reserve') {
       return (
         <Modal
           title="Reservation Submitted"
@@ -271,14 +283,14 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
         </Button>
       ) : (
         <Button onClick={submit} loading={mutation.isPending} disabled={mutation.isPending}>
-          {form.type === 'book' ? 'Submit Booking' : 'Submit Reservation'}
+          {effectiveType === 'book' ? 'Submit Booking' : 'Submit Reservation'}
         </Button>
       )}
     </div>
   )
 
   return (
-    <Modal title={form.type === 'book' ? 'New Booking' : 'New Reservation'} onClose={onClose} size="2xl" footer={footer}>
+    <Modal title={effectiveType === 'book' ? 'New Booking' : 'New Reservation'} onClose={onClose} size="2xl" footer={footer}>
 
       {/* Stepper */}
       <div className="flex items-center mb-6">
@@ -306,26 +318,39 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
           <>
             <div>
               <Label>Reservation Type *</Label>
-              <div className="mt-1 grid grid-cols-2 gap-3">
-                {[
-                  { value: 'reserve', title: 'Reserve', desc: 'Request now, pay to submit for approval. Staff reviews and confirms.' },
-                  { value: 'book',    title: 'Book',    desc: 'Pay now for instant confirmation. No approval wait.' },
-                ].map(opt => (
-                  <button
-                    type="button"
-                    key={opt.value}
-                    onClick={() => setField('type', opt.value)}
-                    className={`text-left p-3 rounded-lg border-2 transition-colors cursor-pointer ${
-                      form.type === opt.value
-                        ? 'border-[#C0392B] bg-[#FADBD8]/30'
-                        : 'border-[#E5E7E9] hover:bg-gray-50'
-                    }`}
-                  >
-                    <p className="font-semibold text-sm text-[#1C2833]">{opt.title}</p>
-                    <p className="text-xs text-[#1C2833] mt-0.5">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
+              {letterRequired ? (
+                // "Book" auto-confirms on payment with no human review — incompatible
+                // with a facility that requires an authorization letter to be looked
+                // at first. Reservation-only, no picker to fight with.
+                <div className="mt-1 p-3 rounded-lg border-2 border-[#C0392B] bg-[#FADBD8]/30">
+                  <p className="font-semibold text-sm text-[#1C2833]">Reserve</p>
+                  <p className="text-xs text-[#1C2833] mt-0.5">
+                    {facilityDetail.name} requires an authorization letter, so it's reservation-only —
+                    staff reviews your request and letter before you pay. Instant "Book" isn't available for it.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-1 grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'reserve', title: 'Reserve', desc: 'Request now, pay to submit for approval. Staff reviews and confirms.' },
+                    { value: 'book',    title: 'Book',    desc: 'Pay now for instant confirmation. No approval wait.' },
+                  ].map(opt => (
+                    <button
+                      type="button"
+                      key={opt.value}
+                      onClick={() => setField('type', opt.value)}
+                      className={`text-left p-3 rounded-lg border-2 transition-colors cursor-pointer ${
+                        form.type === opt.value
+                          ? 'border-[#C0392B] bg-[#FADBD8]/30'
+                          : 'border-[#E5E7E9] hover:bg-gray-50'
+                      }`}
+                    >
+                      <p className="font-semibold text-sm text-[#1C2833]">{opt.title}</p>
+                      <p className="text-xs text-[#1C2833] mt-0.5">{opt.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {!preselectedFacility ? (
@@ -361,6 +386,43 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
                   <Badge status={activeFacility.status} />
                 </div>
               )
+            )}
+
+            {facilityDetail?.requires_authorization_letter && (
+              <div>
+                <Label>Authorization Letter *</Label>
+                <p className="text-xs text-[#1C2833] mt-0.5 mb-1.5">
+                  {facilityDetail.name} requires a signed authorization letter (PDF or image) to be attached to this request.
+                </p>
+                {letterFile ? (
+                  <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-[#A9DFBF] bg-[#EAFAF1]">
+                    <span className="flex items-center gap-2 min-w-0 text-sm text-[#1E8449]">
+                      <FileCheck className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{letterFile.name}</span>
+                    </span>
+                    <button type="button" onClick={() => setLetterFile(null)} className="p-1 rounded text-[#1E8449] hover:bg-[#D5F5E3] shrink-0">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className={`flex flex-col items-center justify-center gap-1.5 py-5 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
+                    errors.authorization_letter ? 'border-[#C0392B] bg-[#FADBD8]/10' : 'border-[#E5E7E9] hover:bg-gray-50'
+                  }`}>
+                    <Upload className="h-5 w-5 text-[#1C2833]" />
+                    <span className="text-sm text-[#1C2833]">Click to upload — PDF, JPG, or PNG (max 5MB)</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files[0]
+                        if (file) { setLetterFile(file); setErrors(er => ({ ...er, authorization_letter: '' })) }
+                      }}
+                    />
+                  </label>
+                )}
+                {errors.authorization_letter && <p className="text-red-500 text-xs mt-1">{errors.authorization_letter}</p>}
+              </div>
             )}
 
             <div>
@@ -436,49 +498,21 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
                   <span className="text-[#1C2833] font-normal ml-1">(max {facilityDetail.capacity})</span>
                 )}
               </Label>
-              <Input type="number" min={1} max={facilityDetail?.capacity}
+              <select
                 value={form.number_of_participants}
                 onChange={e => setField('number_of_participants', e.target.value)}
-                error={!!errors.number_of_participants} className="mt-1" placeholder="e.g. 10" />
+                disabled={!facilityDetail?.capacity}
+                className={`mt-1 block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#FADBD8] focus:border-[#C0392B] bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${
+                  errors.number_of_participants ? 'border-[#C0392B]' : 'border-[#E5E7E9]'
+                }`}
+              >
+                <option value="">{facilityDetail?.capacity ? '— Select —' : 'Loading capacity…'}</option>
+                {facilityDetail?.capacity && Array.from({ length: facilityDetail.capacity }, (_, i) => i + 1).map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
               {errors.number_of_participants && <p className="text-red-500 text-xs mt-1">{errors.number_of_participants}</p>}
             </div>
-
-            {facilityDetail?.requires_authorization_letter && (
-              <div>
-                <Label>Authorization Letter *</Label>
-                <p className="text-xs text-[#1C2833] mt-0.5 mb-1.5">
-                  {facilityDetail.name} requires a signed authorization letter (PDF or image) to be attached to this request.
-                </p>
-                {letterFile ? (
-                  <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-[#A9DFBF] bg-[#EAFAF1]">
-                    <span className="flex items-center gap-2 min-w-0 text-sm text-[#1E8449]">
-                      <FileCheck className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{letterFile.name}</span>
-                    </span>
-                    <button type="button" onClick={() => setLetterFile(null)} className="p-1 rounded text-[#1E8449] hover:bg-[#D5F5E3] shrink-0">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className={`flex flex-col items-center justify-center gap-1.5 py-5 rounded-lg border-2 border-dashed cursor-pointer transition-colors ${
-                    errors.authorization_letter ? 'border-[#C0392B] bg-[#FADBD8]/10' : 'border-[#E5E7E9] hover:bg-gray-50'
-                  }`}>
-                    <Upload className="h-5 w-5 text-[#1C2833]" />
-                    <span className="text-sm text-[#1C2833]">Click to upload — PDF, JPG, or PNG (max 5MB)</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      className="hidden"
-                      onChange={e => {
-                        const file = e.target.files[0]
-                        if (file) { setLetterFile(file); setErrors(er => ({ ...er, authorization_letter: '' })) }
-                      }}
-                    />
-                  </label>
-                )}
-                {errors.authorization_letter && <p className="text-red-500 text-xs mt-1">{errors.authorization_letter}</p>}
-              </div>
-            )}
 
             {facilityDetail?.amenities?.filter(a => a.is_available).length > 0 && (
               <div>
@@ -511,7 +545,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
             <p className="text-xs text-[#1C2833] mb-3">Please read and accept the terms before submitting your reservation.</p>
 
             <div className="border border-[#E5E7E9] rounded-lg divide-y divide-[#F2F3F4] max-h-56 overflow-y-auto">
-              {termsFor(form.type).map(({ heading, body }) => (
+              {termsFor(effectiveType).map(({ heading, body }) => (
                 <div key={heading} className="px-4 py-3">
                   <h4 className="text-xs font-semibold text-gray-900 mb-0.5">{heading}</h4>
                   <p className="text-xs text-[#1C2833] leading-relaxed">{body}</p>
@@ -539,7 +573,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
             <h3 className="font-semibold text-gray-900">Review Your Reservation</h3>
             <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden text-sm">
               {[
-                ['Type',         form.type === 'book' ? 'Book (instant confirm)' : 'Reserve (requires approval)'],
+                ['Type',         effectiveType === 'book' ? 'Book (instant confirm)' : 'Reserve (requires approval)'],
                 ['Facility',     activeFacility?.name],
                 ['Date',         form.reservation_date],
                 ['Time',         form.start_time && form.end_time ? `${fmt12(form.start_time)} – ${fmt12(form.end_time)}` : '—'],
@@ -564,7 +598,7 @@ export default function NewReservationModal({ onClose, preselectedFacility = '' 
               ))}
             </div>
             <p className="text-sm text-[#1C2833] bg-[#FADBD8]/20 p-3 rounded-lg border border-[#F1948A]/20">
-              {form.type === 'book'
+              {effectiveType === 'book'
                 ? <>After submission, you'll be asked to <strong>complete payment</strong> right away. Once received, your booking is confirmed instantly — no approval wait.</>
                 : <>After submission, an admin will <strong>review and approve</strong> your request first. You'll only be asked to pay once it's approved.</>}
             </p>
