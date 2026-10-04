@@ -41,8 +41,4 @@ return [
         'webhook_secret' => env('PAYMONGO_WEBHOOK_SECRET'),
     ],
 
-    'cloudinary' => [
-        'url' => env('CLOUDINARY_URL'),
-    ],
-
 ];

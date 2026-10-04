@@ -7,7 +7,6 @@ use App\Models\Facility;
 use App\Models\MaintenanceLog;
 use App\Models\Reservation;
 use App\Services\NotificationService;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
@@ -201,18 +200,6 @@ class FacilityController extends Controller
 
     private function storeFacilityImage($file): ?string
     {
-        if (config('services.cloudinary.url')) {
-            try {
-                $result = Cloudinary::uploadApi()->upload($file->getRealPath(), [
-                    'folder' => 'cabs/facilities',
-                ]);
-
-                return $result['secure_url'] ?? null;
-            } catch (\Throwable $exception) {
-                report($exception);
-            }
-        }
-
         return $file->store('facilities', 'public') ?: null;
     }
 
