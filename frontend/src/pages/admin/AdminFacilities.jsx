@@ -218,13 +218,13 @@ export default function AdminFacilities() {
 
   const buildFormData = () => {
     const fd = new FormData()
-    fd.append('name',           form.name)
-    fd.append('description',    form.description)
-    fd.append('location',       form.location)
-    fd.append('capacity',       form.capacity)
-    fd.append('price_per_hour', form.price_per_hour)
-    fd.append('status',         form.status)
-    fd.append('requires_authorization_letter', form.requires_authorization_letter ? 'true' : 'false')
+    fd.append('name',                       form.name || '')
+    fd.append('description',                form.description || '')
+    fd.append('location',                   form.location || '')
+    fd.append('capacity',                   form.capacity || '')
+    fd.append('price_per_hour',             form.price_per_hour || '')
+    fd.append('status',                     form.status || 'available')
+    fd.append('requires_authorization_letter', form.requires_authorization_letter ? '1' : '0')
     if (imageFile) fd.append('image', imageFile)
     return fd
   }
@@ -515,9 +515,6 @@ export default function AdminFacilities() {
               onFileChange={handleFileChange}
               onClear={() => {
                 resetImage()
-                // If editing and the facility had an existing image, clearing only removes
-                // the local preview; the server image is only replaced when a new file is
-                // uploaded (there's no dedicated "remove image" endpoint).
               }}
             />
 
