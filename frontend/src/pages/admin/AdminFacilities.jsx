@@ -188,9 +188,10 @@ export default function AdminFacilities() {
   const [maintenanceModal, setMaintenanceModal] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
 
-  const [form,  setForm]  = useState(BLANK_FACILITY)
-  const [maint, setMaint] = useState(BLANK_MAINTENANCE)
-  const [imageFile, setImageFile] = useState(null)
+  const [form,         setForm]         = useState(BLANK_FACILITY)
+  const [maint,        setMaint]        = useState(BLANK_MAINTENANCE)
+  const [imageFile,    setImageFile]    = useState(null)   // File | null
+  const [imagePreview, setImagePreview] = useState(null)   // string | null
 
   const { data: facilities = [], isLoading } = useQuery({
     queryKey: ['facilities'],
@@ -217,18 +218,14 @@ export default function AdminFacilities() {
 
   const buildFormData = () => {
     const fd = new FormData()
-    fd.append('name', form.name || '')
-    fd.append('description', form.description || '')
-    fd.append('location', form.location || '')
-    fd.append('capacity', form.capacity || '')
-    fd.append('price_per_hour', form.price_per_hour || '')
-    fd.append('status', form.status || 'available')
-
-    if (imageFile instanceof Blob) {
-      fd.append('image', imageFile)
-    }
-
-    fd.append('requires_authorization_letter', form.requires_authorization_letter ? '1' : '0')
+    fd.append('name',           form.name)
+    fd.append('description',    form.description)
+    fd.append('location',       form.location)
+    fd.append('capacity',       form.capacity)
+    fd.append('price_per_hour', form.price_per_hour)
+    fd.append('status',         form.status)
+    fd.append('requires_authorization_letter', form.requires_authorization_letter ? 'true' : 'false')
+    if (imageFile) fd.append('image', imageFile)
     return fd
   }
 
@@ -243,12 +240,9 @@ export default function AdminFacilities() {
   })
 
   const updateMutation = useMutation({
-    
+    // PHP doesn't parse multipart/form-data on PUT — use POST with _method spoofing
     mutationFn: ({ id, fd }) => {
-     
-      if (!fd.has('_method')) {
-        fd.append('_method', 'PUT')
-      }
+      fd.append('_method', 'PUT')
       return api.post(`/admin/facilities/${id}`, fd)
     },
     onSuccess: () => {
@@ -291,13 +285,14 @@ export default function AdminFacilities() {
 
   const openCreate = () => {
     setForm(BLANK_FACILITY)
-    setImageFile(null)
+    resetImage()
     setFacilityModal('create')
   }
 
   const openEdit = f => {
     setForm({ ...f })
     setImageFile(null)
+    setImagePreview(f.image_url || null)
     setFacilityModal(f)
   }
 
@@ -586,15 +581,6 @@ export default function AdminFacilities() {
                   <option value="under_maintenance">Under Maintenance</option>
                   <option value="unavailable">Unavailable</option>
                 </select>
-              </div>
-              <div className="sm:col-span-2 space-y-1">
-                <label className="text-xs font-semibold text-[#1C2833]">Facility Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={e => setImageFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-[#1C2833] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#FADBD8] file:text-[#C0392B] hover:file:bg-[#F5B7B1]"
-                />
               </div>
               <div className="sm:col-span-2">
                 <label className="flex items-start gap-2.5 p-3 rounded-lg border border-[#E5E7E9] cursor-pointer hover:bg-gray-50 transition-colors">
